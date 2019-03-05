@@ -1,4 +1,6 @@
+'use strict';
 const Controller = require('egg').Controller;
+// eslint-disable-next-line no-unused-vars
 const _ = require('lodash');
 
 module.exports = app => class ShippingController extends Controller {

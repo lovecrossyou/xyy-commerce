@@ -1,3 +1,4 @@
+// eslint-disable-next-line strict
 const Controller = require('egg').Controller;
 const _ = require('lodash');
 

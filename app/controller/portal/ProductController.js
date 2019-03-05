@@ -1,3 +1,4 @@
+/* eslint-disable strict */
 const Controller = require('egg').Controller;
 const _ = require('lodash');
 
