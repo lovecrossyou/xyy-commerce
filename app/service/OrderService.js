@@ -4,8 +4,11 @@ const path = require('path');
 const _ = require('lodash');
 const qr = require('qr-image');
 const alipayf2fConfig = require('../common/alipayConfig');
+const wxpayConfig = require('../common/wxpayConfig');
 const alipayftof = require('alipay-ftof');
 const alipayf2f = new alipayftof(alipayf2fConfig);
+const wxpay = require('../lib/wechatPay')
+
 
 // 要求在env = test 环境下
 process.env.NODE_ENV = 'test'
@@ -95,6 +98,46 @@ module.exports = app => {
       console.log(result.data)
       return this.ServerResponse.createBySuccessMsgAndData('支付宝手机支付地址创建成功', result)
     }
+
+
+    async openId(code){
+      const pay = new wxpay(wxpayConfig);
+       return new Promise(resolve=>{
+        pay.code2Session(code,res=>{
+          resolve(res);
+       })
+    })}
+
+    /**
+     * 
+     * @param {微信支付} orderData 
+     */
+    async wxpay(orderData){
+      return new Promise(resolve=>{
+        const pay = new wxpay(wxpayConfig);
+        const notify_url = "http://127.0.0.1:7001/notifyUrl";
+        const out_trade_no = orderData.out_trade_no;
+        const {title,price} = orderData;
+        const ip = "127.0.0.1";
+
+        pay.createOrder({
+          openid:"ou3ry5IxNxJwMIYsrBG96S4zbUuE",
+          notify_url:notify_url,
+          out_trade_no:out_trade_no,
+          attach:title,
+          body:title,
+          total_fee:price,
+          spbill_create_ip:ip
+        },function(error,responseData){
+          console.log("wxpay responseData ",responseData);
+          if(error){
+            console.log(error);
+          }
+          resolve(responseData);
+        })
+      })
+    }
+    
 
     /**
      * @feature 处理支付宝支付回调

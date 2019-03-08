@@ -2,7 +2,7 @@
 const Controller = require('egg').Controller;
 const _ = require('lodash');
 
-module.exports = app => class OrderController extends Controller {
+class OrderController extends Controller {
   constructor(ctx) {
     super(ctx);
     this.session = ctx.session;
@@ -22,9 +22,9 @@ module.exports = app => class OrderController extends Controller {
   }
 
   async mobilePay() {
-    const { orderNum } = this.request.body
-    const response = await this.OrderService.mobilePay(orderNum)
-    this.ctx.body = response
+    const { orderNum } = this.request.body;
+    const response = await this.OrderService.mobilePay(orderNum);
+    this.ctx.body = response;
   }
 
   async queryOrderPayStatus() {
@@ -41,13 +41,13 @@ module.exports = app => class OrderController extends Controller {
   }
 
   async create() {
-    const { shippingId } = this.request.body
+    const { shippingId } = this.request.body;
     const response = await this.OrderService.createOrder(shippingId);
     this.ctx.body = response;
   }
 
   async cancel() {
-    const { orderNum } = this.request.body
+    const { orderNum } = this.request.body;
     const response = await this.OrderService.cancel(orderNum);
     this.ctx.body = response;
   }
@@ -64,8 +64,30 @@ module.exports = app => class OrderController extends Controller {
   }
 
   async detail() {
-    const { orderNum } = this.request.query
+    const { orderNum } = this.request.query;
     const response = await this.OrderService.getDetail(orderNum);
     this.ctx.body = response;
   }
-};
+
+  async openId() {
+    const { code } = this.request.query;
+    console.log('code ## ', code);
+    this.ctx.body = await this.OrderService.openId(code);
+  }
+
+  /**
+   * 微信支付
+   */
+  async wxpay() {
+    const d = new Date();
+    const data = {
+      title: '辣条1',
+      out_trade_no: d.getTime().toString(),
+      price: '99',
+    };
+    const code_url = await this.service.orderService.wxpay(data);
+    this.ctx.body = code_url;
+  }
+}
+
+module.exports = OrderController;

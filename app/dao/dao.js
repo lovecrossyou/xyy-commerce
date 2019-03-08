@@ -1,1 +1,1 @@
-module.exports = (app) => app.model.OrderModel
+module.exports = app => app.model.OrderModel
