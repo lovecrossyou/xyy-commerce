@@ -102,7 +102,7 @@ class UserService extends Service {
 
       return this.ServerResponse.createBySuccessMsgAndData('注册成功', user);
     } catch (e) {
-      console.log(e);
+      // console.log(e);
       return this.ServerResponse.createByErrorMsg('注册失败');
     }
   }
