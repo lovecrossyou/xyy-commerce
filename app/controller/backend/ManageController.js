@@ -21,7 +21,8 @@ class ManageController extends Controller {
     response = await this.UserService.login(username, password);
     if (response.isSuccess()) {
       user = response.getData();
-      if (!user) return this.ctx.body = response
+      // eslint-disable-next-line no-return-assign
+      if (!user) return this.ctx.body = response;
       if (user.role === ROLE_ADMAIN) this.session.currentUser = user;
       else response = this.ServerResponse.createByErrorMsg('无法登录，不是管理员');
     }
@@ -29,12 +30,12 @@ class ManageController extends Controller {
   }
 
   async count() {
-    const [ userCount, orderCount, productCount ] = await Promise.all([ this.UserModel.count({}), this.OrderModel.count({}), this.ProductModel.count({}) ])
+    const [ userCount, orderCount, productCount ] = await Promise.all([ this.UserModel.count({}), this.OrderModel.count({}), this.ProductModel.count({}) ]);
     this.ctx.body = this.ServerResponse.createBySuccessMsgAndData('总数', {
       userCount,
       orderCount,
       productCount,
-    })
+    });
   }
 }
 

@@ -10,5 +10,5 @@ run/
 .DS_Store
 *.sw*
 *.un~
-config/config.default.js
-config/plugin.js
+# config/config.default.js
+# config/plugin.js
