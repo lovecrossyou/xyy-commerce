@@ -50,7 +50,7 @@ class ProductManageController extends Controller {
 
   // 上传图片
   async upload() {
-    let response
+    let response;
     const stream = await this.ctx.getFileStream();
     const extname = path.extname(stream.filename);
     const name = path.basename(stream.filename, extname);

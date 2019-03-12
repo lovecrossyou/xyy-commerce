@@ -1,5 +1,5 @@
-const { NO_PAY } = require('../common/orderStatus')
-const { ONLINE_PAY } = require('../common/paymentType')
+const { NO_PAY } = require('../common/orderStatus');
+const { ONLINE_PAY } = require('../common/paymentType');
 
 module.exports = app => {
   const { INTEGER, DATE, BIGINT, DECIMAL, UUID, UUIDV4 } = app.Sequelize;
@@ -41,13 +41,13 @@ module.exports = app => {
     postage: {
       type: INTEGER(10),
       allowNull: true,
-      defaultValue: 0
+      defaultValue: 0,
     },
     // 订单状态 0已取消 10未支付 20已支付 40已发货 50订单完成 60订单关闭
     status: {
       type: INTEGER(10),
       allowNull: true,
-      defaultValue: NO_PAY.CODE
+      defaultValue: NO_PAY.CODE,
     },
     // 支付时间
     paymentTime: {

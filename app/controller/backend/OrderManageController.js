@@ -25,13 +25,13 @@ module.exports = app => class OrderController extends Controller {
   }
 
   async detail() {
-    const { orderNum } = this.request.query
+    const { orderNum } = this.request.query;
     const response = await this.OrderService.getDetail(orderNum);
     this.ctx.body = response;
   }
 
   async sendGood() {
-    const { orderNum } = this.request.body
+    const { orderNum } = this.request.body;
     const response = await this.OrderService.manageSendGood(orderNum);
     this.ctx.body = response;
   }

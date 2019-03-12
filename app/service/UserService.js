@@ -67,8 +67,7 @@ class UserService extends Service {
     });
 
     if (!user) return this.ServerResponse.createByErrorMsg('密码错误');
-
-    const userInfo = user.toJSON()
+        const userInfo = user.toJSON()
     let redirectTo
     if (userInfo.role === ROLE_ADMAIN) redirectTo = '/'
     else redirectTo = ''

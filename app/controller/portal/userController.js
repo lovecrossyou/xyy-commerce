@@ -7,6 +7,7 @@ class UserController extends Controller {
     this.session = ctx.session;
     this.UserModel = ctx.model.UserModel;
     this.UserService = ctx.service.userService;
+    this.tokenService = ctx.service.tokenService;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
   }
@@ -15,12 +16,13 @@ class UserController extends Controller {
   async login() {
     const { username, password } = this.ctx.request.body;
     const response = await this.UserService.login(username, password);
-
-    if (response.isSuccess()) {
+    // 生成token
+    const tokenResponse = await this.tokenService.saveToken(response.data);
+    if (tokenResponse.isSuccess()) {
       this.session.currentUser = response.getData();
     }
 
-    this.ctx.body = response;
+    this.ctx.body = tokenResponse;
   }
 
   // 登出
