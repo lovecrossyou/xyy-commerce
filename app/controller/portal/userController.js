@@ -21,7 +21,6 @@ class UserController extends Controller {
     if (tokenResponse.isSuccess()) {
       this.session.currentUser = response.getData();
     }
-
     this.ctx.body = tokenResponse;
   }
 
