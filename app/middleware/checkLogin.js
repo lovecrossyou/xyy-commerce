@@ -19,7 +19,7 @@ module.exports = options => {
         id: tokenInfo.userId,
       },
     });
-    if (!user) return ctx.body = ctx.response.ServerResponse.createByErrorCodeMsg(ctx.response.ResponseCode.NEED_LOGIN, '用户未登录');
+    if (!user) return ctx.body = ctx.response.ServerResponse.createByErrorCodeMsg(ctx.response.ResponseCode.NEED_LOGIN, '未找到用户信息');
     if (options.checkAdmin && user.role !== ROLE_ADMAIN) return ctx.body = ctx.response.ServerResponse.createByErrorCodeMsg(ctx.response.ResponseCode.NO_AUTH, '用户不是管理员无权操作');
     await next();
   };

@@ -50,7 +50,8 @@ class WechatPay {
       out_trade_no: obj.out_trade_no, // new Date().getTime(), //订单号
       spbill_create_ip: obj.spbill_create_ip,
       total_fee: obj.total_fee,
-      trade_type: 'JSAPI', // 小程序
+      trade_type: obj.trade_type,
+      // trade_type: 'JSAPI', // 小程序
       // trade_type: 'NATIVE', // PC
     };
     // 返回 promise 对象
@@ -122,9 +123,7 @@ class WechatPay {
         // code_url: prepay_id, // 生成支付二维码使用
         signType: 'MD5', // 微信签名方式：
       };
-
       wcPayParams.paySign = that.getSign(wcPayParams); // 微信支付签名
-
       callback(null, wcPayParams);
     }, function(error) {
       callback(error);
@@ -187,7 +186,6 @@ class WechatPay {
       if (error) {
         cb(error);
       } else {
-
         cb(null, responseData);
       }
     });

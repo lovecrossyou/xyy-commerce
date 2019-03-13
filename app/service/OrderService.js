@@ -8,7 +8,7 @@ const wxpayConfig = require('../common/wxpayConfig');
 const alipayftof = require('alipay-ftof');
 const alipayf2f = new alipayftof(alipayf2fConfig);
 const wxpay = require('../lib/wechatPay')
-
+const tenpay = require('tenpay');
 
 // 要求在env = test 环境下
 process.env.NODE_ENV = 'test'
@@ -107,6 +107,9 @@ module.exports = app => {
           resolve(res);
        })
     })}
+    
+
+
 
     /**
      * 
@@ -114,27 +117,40 @@ module.exports = app => {
      */
     async wxpay(orderData){
       return new Promise(resolve=>{
-        const pay = new wxpay(wxpayConfig);
-        const notify_url = "http://127.0.0.1:7001/notifyUrl";
-        const out_trade_no = orderData.out_trade_no;
-        const {title,price} = orderData;
-        const ip = "127.0.0.1";
 
-        pay.createOrder({
-          openid:"ou3ry5IxNxJwMIYsrBG96S4zbUuE",
-          notify_url:notify_url,
-          out_trade_no:out_trade_no,
-          attach:title,
-          body:title,
-          total_fee:price,
-          spbill_create_ip:ip
-        },function(error,responseData){
-          console.log("wxpay responseData ",responseData);
-          if(error){
-            console.log(error);
-          }
-          resolve(responseData);
-        })
+      const config = {
+        appid: '公众号ID',
+        mchid: '微信商户号',
+        partnerKey: '微信支付安全密钥',
+        pfx: require('fs').readFileSync('证书文件路径'),
+        notify_url: '支付回调网址',
+        spbill_create_ip: 'IP地址'
+      };
+
+        // const pay = new wxpay(wxpayConfig.wx_mp);
+        // // const pay = new wxpay(wxpayConfig.app);
+
+        // const notify_url = "http://127.0.0.1:7001/notifyUrl";
+        // const out_trade_no = orderData.out_trade_no;
+        // const {title,price} = orderData;
+        // const ip = "127.0.0.1";
+
+        // pay.createOrder({
+        //   trade_type: "APP",
+        //   openid:"ou3ry5IxNxJwMIYsrBG96S4zbUuE",
+        //   notify_url:notify_url,
+        //   out_trade_no:out_trade_no,
+        //   attach:title,
+        //   body:title,
+        //   total_fee:price,
+        //   spbill_create_ip:ip
+        // },function(error,responseData){
+        //   console.log("wxpay responseData ",responseData);
+        //   if(error){
+        //     console.log(error);
+        //   }
+        //   resolve(responseData);
+        // })
       })
     }
     
