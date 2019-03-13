@@ -12,6 +12,7 @@ module.exports = options => {
         tokenString,
       },
     });
+    if (!tokenInfo) return ctx.body = ctx.response.ServerResponse.createByErrorCodeMsg(ctx.response.ResponseCode.NEED_LOGIN, 'token信息失效');
     const user = await ctx.model.UserModel.findOne({
       attributes: [ 'id', 'username', 'email', 'phone', 'role' ],
       where: {
