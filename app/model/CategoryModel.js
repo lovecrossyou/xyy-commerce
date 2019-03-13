@@ -19,6 +19,11 @@ module.exports = app => {
       type: STRING(50),
       allowNull: true,
     },
+    // 类别描述信息
+    desc: {
+      type: STRING(50),
+      allowNull: true,
+    },
     // 类别状态1-正常，2-废弃
     status: {
       type: INTEGER(1),
