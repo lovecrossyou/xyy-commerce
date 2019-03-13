@@ -29,8 +29,8 @@ class CategoryManageController extends Controller {
 
   // 获取某分类下平级子分类
   async getChildParallelCagtegory() {
-    const { parentId = 0 } = this.ctx.params;
-    const response = await this.CategoryManageService.getChildParallelCagtegory(parentId);
+    const { parentId = 0, type } = this.ctx.params;
+    const response = await this.CategoryManageService.getChildParallelCagtegory(parentId, type);
     this.ctx.body = response;
   }
 

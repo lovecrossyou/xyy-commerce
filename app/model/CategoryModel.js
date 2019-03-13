@@ -1,5 +1,5 @@
 module.exports = app => {
-  const { INTEGER, STRING, DATE, UUID, UUIDV4 } = app.Sequelize;
+  const { INTEGER, STRING, DATE, UUID, UUIDV4, BOOLEAN } = app.Sequelize;
 
   const CategoryModel = app.model.define('category', {
     id: {
@@ -18,6 +18,20 @@ module.exports = app => {
     name: {
       type: STRING(50),
       allowNull: true,
+    },
+    // 是否属于基础项
+    basic: {
+      type: BOOLEAN,
+      defaultValue: true,
+    },
+    summary: {
+      type: STRING(50),
+      allowNull: true,
+    },
+    type: {
+      type: INTEGER(1),
+      allowNull: true,
+      defaultValue: 0,
     },
     // 类别描述信息
     desc: {

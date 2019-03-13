@@ -43,10 +43,10 @@ class CategoryManageService extends Service {
    * @param parentId
    * @return {Promise.<*>}
    */
-  async getChildParallelCagtegory(parentId = 0) {
+  async getChildParallelCagtegory(parentId = 0, type = 0) {
     const cagtegoryRows = await this.CategoryModel.findAll({
       attributes: [ 'id', 'parentId', 'name', 'status' ],
-      where: { parentId },
+      where: { parentId, type },
     }).then(rows => rows && rows.map(r => r.toJSON()));
     if (cagtegoryRows.length < 1) {
       // return this.ServerResponse.createByErrorMsg('未找到当前分类的子分类')
