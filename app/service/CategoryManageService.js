@@ -11,12 +11,14 @@ class CategoryManageService extends Service {
   /**
    * @feature 添加分类
    * @param name {String} 类别名称
+   * @param summary {String} 类别描述
+   * @param type {Number} 类别type (店铺的商品 0 、水质检测分类1)
    * @param parentId {Number} 父类别id
    * @return {*}
    */
-  async addCategory(name, parentId = 0) {
+  async addCategory(name, summary, type = 0, parentId = 0) {
     if (!name.trim()) return this.ServerResponse.createByErrorMsg('添加品类参数错误');
-    const categoryRow = await this.CategoryModel.create({ name, parentId });
+    const categoryRow = await this.CategoryModel.create({ name, parentId, summary, type });
     if (!categoryRow) return this.ServerResponse.createByErrorMsg('添加品类失败');
     const category = categoryRow.toJSON();
     return this.ServerResponse.createBySuccessMsgAndData('添加品类成功', category);
