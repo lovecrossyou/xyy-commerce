@@ -18,7 +18,7 @@ module.exports = app => {
 
   app.router.get('/order/detail', checkLogin, app.controller.portal.orderController.detail);
 
-  app.router.post('/order/wxpay', app.controller.portal.orderController.wxpay);
+  app.router.get('/order/wxpay', app.controller.portal.orderController.wxpay);
 
   app.router.get('/order/openId', app.controller.portal.orderController.openId);
 

@@ -80,12 +80,14 @@ class OrderController extends Controller {
    */
   async wxpay() {
     const d = new Date();
-    const data = {
+    const orderData = {
       title: '辣条1',
       out_trade_no: d.getTime().toString(),
-      price: '99',
+      price: '1',
+      // trade_type: 'JSAPI',
+      trade_type: 'APP',
     };
-    const code_url = await this.service.orderService.wxpay(data);
+    const code_url = await this.service.orderService.wxpay(orderData);
     this.ctx.body = code_url;
   }
 }

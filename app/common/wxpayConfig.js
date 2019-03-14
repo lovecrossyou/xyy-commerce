@@ -1,24 +1,14 @@
-// module.exports = {
-//   wx_mp: {
-//     mch_id: '1525281061',
-//     wxappid: 'wx56e7731073ee003f',
-//     wxpaykey: '1f0506f1a0336eada6fd7b3f43e21130',
-//     wxappsecret: '1f0506f1a0336eada6fd7b3f43e29070',
-//   },
-//   app: {
-//     mch_id: '1525281061',
-//     wxappid: 'wxe920a6ec16c8c9bd',
-//     wxpaykey: '1f0506f1a0336eada6fd7b3f43e21130',
-//     wxappsecret: '1f0506f1a0336eada6fd7b3f43e29070',
-//   },
-// };
 
 module.exports = {
-  mchid: '1525281061',
+  // 小程序
   appid: 'wx56e7731073ee003f',
-  partnerKey: '1f0506f1a0336eada6fd7b3f43e21130',
   wxappsecret: '1f0506f1a0336eada6fd7b3f43e29070',
-  notify_url: '',
+  // 微信开放平台
+  // appid: 'wxe920a6ec16c8c9bd',
+  // wxappsecret: '1920fa379966a2d1087f00c79a16d2b0',
+  mchid: '1525281061',
+  partnerKey: '1f0506f1a0336eada6fd7b3f43e21130',
+  notify_url: 'http://127.0.0.1:7001/notifyUrl',
   spbill_create_ip: '127.0.0.1',
 };
 

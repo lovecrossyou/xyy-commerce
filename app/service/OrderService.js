@@ -7,7 +7,6 @@ const alipayf2fConfig = require('../common/alipayConfig');
 const wxpayConfig = require('../common/wxpayConfig');
 const alipayftof = require('alipay-ftof');
 const alipayf2f = new alipayftof(alipayf2fConfig);
-const wxpay = require('../lib/wechatPay')
 const tenpay = require('tenpay');
 
 // 要求在env = test 环境下
@@ -99,61 +98,46 @@ module.exports = app => {
       return this.ServerResponse.createBySuccessMsgAndData('支付宝手机支付地址创建成功', result)
     }
 
-
-    async openId(code){
-      const pay = new wxpay(wxpayConfig);
-       return new Promise(resolve=>{
-        pay.code2Session(code,res=>{
-          resolve(res);
-       })
-    })}
-    
-
-
-
     /**
      * 
      * @param {微信支付} orderData 
      */
-    async wxpay(orderData){
-      return new Promise(resolve=>{
+    async wxpay(orderData) {
+      const out_trade_no = orderData.out_trade_no;
+      const { title, price, trade_type } = orderData;
+      const api = new tenpay(wxpayConfig, true);
+      let result, prepay_id ;
+      if (trade_type !== 'APP') {
+        result = await api.getPayParams({
+          out_trade_no: out_trade_no,
+          body: title,
+          total_fee: price,
+          openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE'
+        })
+        //
+        console.log('JSAPI##### ', result)
+        const result_package = result.package ;
 
-      const config = {
-        appid: '公众号ID',
-        mchid: '微信商户号',
-        partnerKey: '微信支付安全密钥',
-        pfx: require('fs').readFileSync('证书文件路径'),
-        notify_url: '支付回调网址',
-        spbill_create_ip: 'IP地址'
-      };
-
-        // const pay = new wxpay(wxpayConfig.wx_mp);
-        // // const pay = new wxpay(wxpayConfig.app);
-
-        // const notify_url = "http://127.0.0.1:7001/notifyUrl";
-        // const out_trade_no = orderData.out_trade_no;
-        // const {title,price} = orderData;
-        // const ip = "127.0.0.1";
-
-        // pay.createOrder({
-        //   trade_type: "APP",
-        //   openid:"ou3ry5IxNxJwMIYsrBG96S4zbUuE",
-        //   notify_url:notify_url,
-        //   out_trade_no:out_trade_no,
-        //   attach:title,
-        //   body:title,
-        //   total_fee:price,
-        //   spbill_create_ip:ip
-        // },function(error,responseData){
-        //   console.log("wxpay responseData ",responseData);
-        //   if(error){
-        //     console.log(error);
-        //   }
-        //   resolve(responseData);
-        // })
+        prepay_id = result_package.split('=')[1];
+        result = await api.getPayParamsByPrepay({ prepay_id });
+      }
+      else {
+        result = await api.unifiedOrder({
+          out_trade_no: out_trade_no,
+          body: title,
+          total_fee: price,
+          // openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE',
+          trade_type: trade_type,// APP
+        });
+        prepay_id = result.prepay_id;
+        result = await api.getAppParamsByPrepay({ prepay_id });
+      }
+      return new Promise(resolve => {
+        const resData = this.ServerResponse.createBySuccessMsgAndData('生成微信支付信息成功', result);
+        resolve(resData);
       })
     }
-    
+
 
     /**
      * @feature 处理支付宝支付回调
@@ -197,7 +181,7 @@ module.exports = app => {
 
     async createOrder(shippingId) {
       const { id: userId } = this.session.currentUser
-      const shipping = await this.ShippingModel.findOne({ where: { id: shippingId, userId }}).then(r => r && r.toJSON())
+      const shipping = await this.ShippingModel.findOne({ where: { id: shippingId, userId } }).then(r => r && r.toJSON())
       if (!shipping) return this.ServerResponse.createByErrorMsg('用户无该收货地址')
       // 购物车中获取数据
       const response = await this._getCartListWithProduct(userId)
@@ -228,7 +212,7 @@ module.exports = app => {
      */
     async cancel(orderNum) {
       const { id: userId } = this.session.currentUser
-      const orderRow = await this.OrderModel.findOne({ where: { userId, orderNum }})
+      const orderRow = await this.OrderModel.findOne({ where: { userId, orderNum } })
       if (!orderRow) return this.ServerResponse.createByErrorMsg('用户不存在该订单')
       if (orderRow.get('status') !== ORDER_STATUS_MAP.NO_PAY.CODE) return this.ServerResponse.createByErrorMsg('订单无法取消')
       const updateRow = await orderRow.update({ status: ORDER_STATUS_MAP.CANCELED.CODE, closeTime: new Date() }, { individualHooks: true })
@@ -249,7 +233,7 @@ module.exports = app => {
 
       const orderItemArr = await this._cartListToOrderItemArr(cartListWithProduct)
       const orderTotalPrice = orderItemArr.reduce((total, item) => total + item.totalPrice, 0).toFixed(2)
-      return this.ServerResponse.createBySuccessMsgAndData('订单快照', { orderItemArr, orderTotalPrice, host: 'localhost:7071'})
+      return this.ServerResponse.createBySuccessMsgAndData('订单快照', { orderItemArr, orderTotalPrice, host: 'localhost:7071' })
     }
 
     /**
@@ -258,17 +242,17 @@ module.exports = app => {
      * @returns {Promise.<object>}
      */
     async getDetail(orderNum) {
-      const { id: userId, role} = this.session.currentUser
-      const order = await this.OrderModel.findOne({ where: { orderNum, userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId }}).then(r => r && r.toJSON())
+      const { id: userId, role } = this.session.currentUser
+      const order = await this.OrderModel.findOne({ where: { orderNum, userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId } }).then(r => r && r.toJSON())
       if (!order) return this.ServerResponse.createByErrorMsg('订单不存在')
-      const orderItem = await this.OrderItemModel.findAll({ where: { orderNum, userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId }}).then(rows => rows && rows.map(r => r.toJSON()))
+      const orderItem = await this.OrderItemModel.findAll({ where: { orderNum, userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId } }).then(rows => rows && rows.map(r => r.toJSON()))
       if (orderItem.length < 1) return this.ServerResponse.createByErrorMsg('订单不存在')
       const orderDetail = await this._createOrderDetail(order, orderItem, order.shippingId)
       return this.ServerResponse.createBySuccessMsgAndData('订单详情', orderDetail)
     }
 
     async manageSendGood(orderNum) {
-      const orderRow = await this.OrderModel.findOne({ where: { orderNum }})
+      const orderRow = await this.OrderModel.findOne({ where: { orderNum } })
       if (!orderRow) return this.ServerResponse.createByErrorMsg('订单不存在1')
 
       const orderItem = await this.OrderItemModel.findAll({ where: { orderNum } }).then(rows => rows && rows.map(r => r.toJSON()))
@@ -294,7 +278,7 @@ module.exports = app => {
       // 循环查询解决
       const { count, rows } = await this.OrderModel.findAndCount({
         where: { userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId },
-        order: [[ 'id', 'DESC' ]],
+        order: [['id', 'DESC']],
         limit: Number(pageSize | 0),
         offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
       });
@@ -302,8 +286,8 @@ module.exports = app => {
       const orderList = rows.map(row => row && row.toJSON());
 
       const orderListWithOrderItemsAndShipping = await Promise.all(orderList.map(async item => {
-        const orderItemList = await this.OrderItemModel.findAll({ where: { orderNum: item.orderNum }}).then(rows => rows && rows.map(r => r.toJSON()))
-        const shipping = await this.ShippingModel.findOne({ where: { id: item.shippingId }}).then(r => r && r.toJSON())
+        const orderItemList = await this.OrderItemModel.findAll({ where: { orderNum: item.orderNum } }).then(rows => rows && rows.map(r => r.toJSON()))
+        const shipping = await this.ShippingModel.findOne({ where: { id: item.shippingId } }).then(r => r && r.toJSON())
 
         return { ...item, orderItemList, shipping }
       }))
@@ -342,7 +326,7 @@ module.exports = app => {
     async search({ orderNum, pageNum = 1, pageSize = 10 }) {
       const { count, rows } = await this.OrderModel.findAndCount({
         where: { orderNum },
-        order: [[ 'id', 'DESC' ]],
+        order: [['id', 'DESC']],
         limit: Number(pageSize | 0),
         offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
       });
@@ -350,8 +334,8 @@ module.exports = app => {
       const orderList = rows.map(row => row && row.toJSON());
 
       const orderListWithOrderItemsAndShipping = await Promise.all(orderList.map(async item => {
-        const orderItemList = await this.OrderItemModel.findAll({ where: { orderNum: item.orderNum }}).then(rows => rows && rows.map(r => r.toJSON()))
-        const shipping = await this.ShippingModel.findOne({ where: { id: item.shippingId }}).then(r => r && r.toJSON())
+        const orderItemList = await this.OrderItemModel.findAll({ where: { orderNum: item.orderNum } }).then(rows => rows && rows.map(r => r.toJSON()))
+        const shipping = await this.ShippingModel.findOne({ where: { id: item.shippingId } }).then(r => r && r.toJSON())
 
         return { ...item, orderItemList, shipping }
       }))
@@ -379,7 +363,7 @@ module.exports = app => {
             return arr
           }
         }
-        return [ ...arr, item ]
+        return [...arr, item]
       }, [])
     }
 
@@ -407,7 +391,7 @@ module.exports = app => {
      */
     async _createOrderDetail(order, orderItemList, shippingId) {
       let shipping
-      if (shippingId) shipping = await this.ShippingModel.findOne({ where: { id: shippingId }}).then(r => r && r.toJSON())
+      if (shippingId) shipping = await this.ShippingModel.findOne({ where: { id: shippingId } }).then(r => r && r.toJSON())
 
       const paymentType = this._getEnumValueByCode(PAYMENT_TYPE_MAP, order.paymentType)
       const orderStatus = this._getEnumValueByCode(ORDER_STATUS_MAP, order.status)
@@ -440,7 +424,7 @@ module.exports = app => {
     // 批量更新库存
     async _reduceUpdateProductStock(orderItemList) {
       orderItemList.forEach(async item => {
-        await this.ProductModel.update({ stock: app.Sequelize.literal(`stock - ${item.quantity}`) }, { where: { id: item.productId }})
+        await this.ProductModel.update({ stock: app.Sequelize.literal(`stock - ${item.quantity}`) }, { where: { id: item.productId } })
       })
     }
 
@@ -539,7 +523,7 @@ module.exports = app => {
           arr.push(item.product.name)
         }
       })
-      return { hasStock : arr.length === 0, noStockList: arr }
+      return { hasStock: arr.length === 0, noStockList: arr }
     }
   };
 };
