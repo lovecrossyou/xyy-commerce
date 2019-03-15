@@ -39,7 +39,24 @@ module.exports = appInfo => {
   config.security = {
     csrf: {
       enable: false,
+      ignoreJSON: true,
     },
+  };
+  config.cors = {
+    origin: '*',
+    allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
+  };
+
+
+  config.qiniu = {
+    // I ussually set the key into `~/.zshrc`, and I can get the value via `process.env.key`, It's very safe~
+    ak: 'N6ir9cSEURlLH6tXwRs54NDcolso8zrF_ahvu81_',
+    sk: '93NGXLoycjGYUhWANcAK87zPqnfH_qxCBeC5z5KA',
+    bucket: 'yylift',
+    baseUrl: 'http://static.kuaimayoupin.com/',
+    zone: 'Zone_z1',
+    app: true, // default value
+    agent: false, // default value
   };
 
   // config.oss = {
@@ -53,10 +70,7 @@ module.exports = appInfo => {
   // };
 
   config.multipart = {
-    // fileSize: '50mb', // default 10M
-    // whitelist: [
-    //   '.png'
-    // ]
+    mode: 'file',
   };
 
   return config;

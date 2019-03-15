@@ -12,7 +12,7 @@ class TokenService extends Service {
     this.ServerResponse = ctx.response.ServerResponse;
   }
   async saveToken(user) {
-    if (!user) this.ServerResponse.createByErrorMsg('保存token user信息为空');
+    if (!user) return this.ServerResponse.createByErrorMsg('保存token user信息为空');
     const { id } = user;
     const token = await this.TokenModel.create({
       userId: id,
