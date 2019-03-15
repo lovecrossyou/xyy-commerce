@@ -8,6 +8,16 @@ exports.sequelize = {
   package: 'egg-sequelize',
 };
 
+exports.qiniu = {
+  enable: true,
+  package: 'egg-qiniu-upload',
+};
+
+exports.cors = {
+  enable: true,
+  package: 'egg-cors',
+};
+
 // exports.redis = {
 //   enable: true,
 //   package: 'egg-redis',

@@ -40,6 +40,14 @@ class OrderController extends Controller {
     this.ctx.body = response;
   }
 
+  // 微信支付回调
+  async wxpayCallback() {
+    // 验证回调是否为支付宝发起，避免重复
+    const body = this.ctx.request.body;
+    const response = await this.OrderService.wxpayCallback(body);
+    this.ctx.body = response;
+  }
+
   async create() {
     const { shippingId } = this.request.body;
     const response = await this.OrderService.createOrder(shippingId);

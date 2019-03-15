@@ -165,6 +165,10 @@ module.exports = app => {
       return this.createPayInfo(order.userId, order.orderNum, PayPlatform.ALIPAY.CODE, tradeNo, tradeStatus);
     }
 
+    async wxpayCallback(body){
+      
+    }
+
     /**
      * @feature 查询订单状态
      * @param orderNum {Number} 订单号
