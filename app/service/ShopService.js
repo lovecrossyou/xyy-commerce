@@ -3,7 +3,7 @@ const uuidv1 = require('uuid/v1');
 
 const Service = require('egg').Service;
 
-class TokenService extends Service {
+class ShopService extends Service {
   constructor(ctx) {
     super(ctx);
     this.session = ctx.session;
@@ -23,4 +23,4 @@ class TokenService extends Service {
   }
 }
 
-module.exports = TokenService;
+module.exports = ShopService;
