@@ -14,7 +14,7 @@
     "egg-oss": "^1.1.0",
     "egg-qiniu-upload": "^1.1.4",
     "egg-redis": "^1.0.2",
-    "egg-scripts": "^2.5.0",
+    "egg-scripts": "^2.11.0",
     "egg-sequelize": "^3.1.1",
     "egg-session-redis": "^1.0.0",
     "lodash": "^4.17.5",
@@ -47,8 +47,8 @@
     "node": ">=8.9.0"
   },
   "scripts": {
-    "start": "ENABLE_NODE_LOG=YES egg-scripts start --daemon --title=egg-server-egg-commerce -p 3000",
-    "stop": "egg-scripts stop --title=egg-server-egg-commerce",
+    "start": "ENABLE_NODE_LOG=YES egg-scripts start --daemon --title=xyy-commerce -p 3000",
+    "stop": "egg-scripts stop --title=xyy-commerce",
     "dev": "egg-bin dev --port 7001",
     "debug": "egg-bin debug",
     "test": "npm run lint -- --fix && npm run test-local",
