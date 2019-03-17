@@ -14,8 +14,10 @@ module.exports = appInfo => {
     database: 'egg_commerce',
     host: 'localhost',
     port: '3306',
-    username: 'kepler',
-    password: 'iBhC0qTagRuyqwe<qwe',
+    // username: 'kepler',
+    // password: 'iBhC0qTagRuyqwe<qwe',
+    username: 'root',
+    password: '123456',
     timezone: '+08:00', // 东八时区
   };
 
