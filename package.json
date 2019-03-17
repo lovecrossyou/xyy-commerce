@@ -47,9 +47,9 @@
     "node": ">=8.9.0"
   },
   "scripts": {
-    "start": "ENABLE_NODE_LOG=YES egg-scripts start --daemon --title=xyy-commerce -p 3000",
+    "start": "ENABLE_NODE_LOG=YES egg-scripts start --daemon --title=xyy-commerce -p 8004",
     "stop": "egg-scripts stop --title=xyy-commerce",
-    "dev": "egg-bin dev --port 7001",
+    "dev": "egg-bin dev --port 8004",
     "debug": "egg-bin debug",
     "test": "npm run lint -- --fix && npm run test-local",
     "test-local": "egg-bin test",
