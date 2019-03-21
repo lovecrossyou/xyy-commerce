@@ -126,7 +126,6 @@ module.exports = app => {
           out_trade_no: out_trade_no,
           body: title,
           total_fee: price,
-          // openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE',
           trade_type: trade_type,// APP
         });
         prepay_id = result.prepay_id;

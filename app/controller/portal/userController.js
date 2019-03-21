@@ -12,10 +12,15 @@ class UserController extends Controller {
     this.ServerResponse = ctx.response.ServerResponse;
   }
 
-  // 登录
+  /**
+   * 登录
+   * username 用户名
+   * password 密码
+   * code 微信小程序 wx.login获取的
+   */
   async login() {
-    const { username, password } = this.ctx.request.body;
-    const response = await this.UserService.login(username, password);
+    const { username, password, code } = this.ctx.request.body;
+    const response = await this.UserService.login(username, password, code);
     // 生成token
     const tokenResponse = await this.tokenService.saveToken(response.data);
     if (tokenResponse.isSuccess()) {
