@@ -19,6 +19,9 @@ class ProductManageService extends Service {
     if (!product) return this.ServerResponse.createByErrorMsg('新增或更新产品参数不正确');
     const subImgArr = product.subImages.split(',');
     if (subImgArr.length > 0) product.mainImage = subImgArr[0];
+    // 查找店铺
+    const shopRow = await this.ShopModel.findOne({ where: { id: product.shopId } });
+    if (!shopRow) return this.ServerResponse.createByErrorMsg('店铺信息不存在');
     const resultRow = await this.ProductModel.findOne({ where: { id: product.id } });
     let productRow,
       addOrUpdate;

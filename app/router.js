@@ -18,5 +18,5 @@ module.exports = app => {
   require('./router/backend/productManageRouter')(app);
   require('./router/backend/categoryManageRouter')(app);
   require('./router/backend/qiNiuRouter')(app);
-
+  require('./router/backend/shopRouter')(app);
 };

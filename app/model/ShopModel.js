@@ -6,13 +6,20 @@ module.exports = app => {
   // 0: {icon_name: "减", name: "满减优惠", description: "满30减5，满60减8"}
 
 
-  // image_path: ""
-  // latitude: 39.92843
-  // longitude: 116.35073
-  // name: "小猪的店"
-  // promotion_info: "铺标语铺标语铺标语铺标语"
-  // startTime: "05:30"
-  // phone: 18610824157
+  //   {
+  //     "userId": "1",
+  //     "image_path": "",
+  //     "address": "粮科大厦三层",
+  //     "latitude": 39.92843,
+  //     "longitude": 116.35073,
+  //     "name": "小猪的店",
+  //     "promotion_info": "铺标语铺标语铺标语铺标语",
+  //     "startTime": "05:30",
+  //     "phone": 18610824157,
+  //     "category": "water",
+  //     "business_license_image": "",
+  //     "catering_service_license_image": ""
+  // }
 
 
   const ShopModel = app.model.define('shop', {
@@ -21,14 +28,22 @@ module.exports = app => {
       defaultValue: UUIDV4,
       allowNull: false,
       primaryKey: true,
-      // autoIncrement: true,
     },
     // 用户id
     userId: {
       type: STRING(50),
       allowNull: false,
     },
+    name: {
+      type: STRING(20),
+      allowNull: false,
+    },
     createTime: {
+      type: DATE,
+      allowNull: false,
+      defaultValue: new Date(),
+    },
+    updateTime: {
       type: DATE,
       allowNull: false,
       defaultValue: new Date(),

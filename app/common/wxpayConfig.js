@@ -1,11 +1,11 @@
 
 module.exports = {
   // 小程序
-  appid: 'wx56e7731073ee003f',
-  wxappsecret: '1f0506f1a0336eada6fd7b3f43e29070',
+  // appid: 'wx56e7731073ee003f',
+  // wxappsecret: '1f0506f1a0336eada6fd7b3f43e29070',
   // 微信开放平台
-  // appid: 'wxe920a6ec16c8c9bd',
-  // wxappsecret: '1920fa379966a2d1087f00c79a16d2b0',
+  appid: 'wxe920a6ec16c8c9bd',
+  wxappsecret: '2cb17e31c06f5062c6fb19b49cd1cae8',
   mchid: '1525281061',
   partnerKey: '1f0506f1a0336eada6fd7b3f43e21130',
   notify_url: 'http://127.0.0.1:7001/notifyUrl',

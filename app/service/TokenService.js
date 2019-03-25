@@ -2,7 +2,7 @@
 const uuidv1 = require('uuid/v1');
 
 const Service = require('egg').Service;
-const 
+
 class TokenService extends Service {
   constructor(ctx) {
     super(ctx);
@@ -24,8 +24,8 @@ class TokenService extends Service {
 
 
   // 微信登录获取openid
-  async getOpenId(code){
-
+  async getOpenId(code) {
+    return null;
   }
 
 }
