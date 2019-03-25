@@ -15,8 +15,8 @@ class CategoryManageController extends Controller {
   // 添加类别
   async addCategory() {
     // 默认0 根节点 type为分类的类型(店铺的商品、水质检测分类)
-    const { name, type, parentId = 0, summary = '' } = this.resquest.body;
-    const response = await this.CategoryManageService.addCategory(name, summary, type, parentId);
+    const { name, type, parentId = 0, summary = '', shopId } = this.resquest.body;
+    const response = await this.CategoryManageService.addCategory(name, summary, type, parentId, shopId);
     this.ctx.body = response;
   }
 

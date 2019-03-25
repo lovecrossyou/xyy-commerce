@@ -14,6 +14,10 @@ module.exports = app => {
       type: UUID,
       allowNull: true,
     },
+    shopId: {
+      type: STRING(50),
+      allowNull: true,
+    },
     // 类别名称
     name: {
       type: STRING(50),

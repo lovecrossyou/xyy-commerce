@@ -1,12 +1,9 @@
 'use strict';
 
-/**
- * 添加表字段
- */
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     const { STRING } = Sequelize;
-    await queryInterface.addColumn('category', 'extra', {
+    await queryInterface.addColumn('categories', 'shopId', {
       type: STRING(50),
       allowNull: true,
     });
@@ -20,5 +17,5 @@ module.exports = {
       Example:
       return queryInterface.dropTable('users');
     */
-  },
+  }
 };

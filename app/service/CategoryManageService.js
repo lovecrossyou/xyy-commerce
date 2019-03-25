@@ -16,8 +16,11 @@ class CategoryManageService extends Service {
    * @param parentId {Number} 父类别id
    * @return {*}
    */
-  async addCategory(name, summary, type = 0, parentId = 0) {
+  async addCategory(name, summary, type = 0, parentId = 0, shopId) {
     if (!name.trim()) return this.ServerResponse.createByErrorMsg('添加品类参数错误');
+
+    const shopRow = await this.ShopModel.findOne({ where: { id: shopId } });
+    if (!shopRow) return this.ServerResponse.createByErrorMsg('查找店铺信息失败');
     const categoryRow = await this.CategoryModel.create({ name, parentId, summary, type });
     if (!categoryRow) return this.ServerResponse.createByErrorMsg('添加品类失败');
     const category = categoryRow.toJSON();
@@ -49,10 +52,26 @@ class CategoryManageService extends Service {
       where: { parentId, type },
     }).then(rows => rows && rows.map(r => r.toJSON()));
     if (cagtegoryRows.length < 1) {
-      // return this.ServerResponse.createByErrorMsg('未找到当前分类的子分类')
       this.ctx.logger.info('getChildParallelCagtegory: 未找到当前分类的子分类');
     }
     return this.ServerResponse.createBySuccessData(cagtegoryRows);
+  }
+
+  /**
+   * @param {根据店铺ID查找分类} shopId
+   * @param {*} parentId
+   */
+  async ChildParallelCagtegoryByShopId(shopId, parentId = 0) {
+    const shopRow = await this.ShopModel.findOne({ where: { id: shopId } });
+    if (!shopRow) return this.ServerResponse.createByErrorMsg('查找店铺信息失败');
+
+    const cagtegoryRows = await this.CategoryModel.findAll({
+      attributes: [ 'id', 'parentId', 'name', 'status' ],
+      where: { parentId, shopId },
+    }).then(rows => rows && rows.map(r => r.toJSON()));
+    if (cagtegoryRows.length < 1) {
+      this.ctx.logger.info('ChildParallelCagtegoryByShopId: 未找到当前分类的子分类');
+    }
   }
 
   /**
