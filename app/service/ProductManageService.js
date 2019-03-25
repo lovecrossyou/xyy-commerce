@@ -5,6 +5,8 @@ class ProductManageService extends Service {
   constructor(ctx) {
     super(ctx);
     this.ProductModel = ctx.model.ProductModel;
+    this.ShopModel = ctx.model.ShopModel;
+    this.ShopModel = ctx.model.ShopModel;
     this.CategoryModel = ctx.model.CategoryModel;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
@@ -19,9 +21,13 @@ class ProductManageService extends Service {
     if (!product) return this.ServerResponse.createByErrorMsg('新增或更新产品参数不正确');
     const subImgArr = product.subImages.split(',');
     if (subImgArr.length > 0) product.mainImage = subImgArr[0];
+    // 查询分类
+    const categoryRow = await this.CategoryModel.findOne({ where: { id: product.categoryId } });
+    if (!categoryRow) return this.ServerResponse.createByErrorMsg('分类信息不存在');
     // 查找店铺
     const shopRow = await this.ShopModel.findOne({ where: { id: product.shopId } });
     if (!shopRow) return this.ServerResponse.createByErrorMsg('店铺信息不存在');
+    // 查询商品
     const resultRow = await this.ProductModel.findOne({ where: { id: product.id } });
     let productRow,
       addOrUpdate;

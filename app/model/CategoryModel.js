@@ -24,6 +24,7 @@ module.exports = app => {
       type: BOOLEAN,
       defaultValue: true,
     },
+    // 类别描述信息
     summary: {
       type: STRING(50),
       allowNull: true,
@@ -32,11 +33,6 @@ module.exports = app => {
       type: INTEGER(1),
       allowNull: true,
       defaultValue: 0,
-    },
-    // 类别描述信息
-    desc: {
-      type: STRING(50),
-      allowNull: true,
     },
     // 类别状态1-正常，2-废弃
     status: {
