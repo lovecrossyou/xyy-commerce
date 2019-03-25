@@ -85,7 +85,7 @@ module.exports = app => class CartService extends Service {
       totalPrice,
       allChecked,
       list: cartArr,
-      host: this.config.oss.client.endpoint,
+      // host: this.config.oss.client.endpoint,
     });
   }
 

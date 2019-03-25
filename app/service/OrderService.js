@@ -315,7 +315,7 @@ module.exports = app => {
         pageNum,
         pageSize,
         total: count,
-        host: this.config.oss.client.endpoint,
+        // host: this.config.oss.client.endpoint,
       });
     }
 
@@ -350,7 +350,7 @@ module.exports = app => {
         pageNum,
         pageSize,
         total: count,
-        host: this.config.oss.client.endpoint,
+        // host: this.config.oss.client.endpoint,
       });
     }
 

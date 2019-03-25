@@ -51,14 +51,15 @@ class ShopService extends Service {
     // 店铺存在报错
     const validShopNameResponse = await this.checkValid(SHOPNAME, shop.name);
     if (!validShopNameResponse.isSuccess()) return validShopNameResponse;
-
     try {
+      const { id: userId } = this.session.currentUser;
+      shop = { ...shop, userId }
       shop = await this.ShopModel.create(shop);
-      if (!shop) return this.ServerResponse.createByErrorMsg('注册失败');
+      if (!shop) return this.ServerResponse.createByErrorMsg('注册失败1');
       return this.ServerResponse.createBySuccessMsgAndData('注册成功', shop);
     } catch (e) {
-      // console.log(e);
-      return this.ServerResponse.createByErrorMsg('注册失败');
+      console.log(e);
+      return this.ServerResponse.createByErrorMsg('注册失败2');
     }
   }
 

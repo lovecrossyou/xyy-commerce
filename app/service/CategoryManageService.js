@@ -4,7 +4,9 @@ const _ = require('lodash');
 class CategoryManageService extends Service {
   constructor(ctx) {
     super(ctx);
+    this.ShopModel = ctx.model.ShopModel;
     this.CategoryModel = ctx.model.CategoryModel;
+
     this.ServerResponse = ctx.response.ServerResponse;
   }
 
@@ -16,7 +18,7 @@ class CategoryManageService extends Service {
    * @param parentId {Number} 父类别id
    * @return {*}
    */
-  async addCategory(name, summary, type = 0, parentId = 0, shopId) {
+  async addCategory(name, summary = '', type = 0, parentId = 0, shopId) {
     if (!name.trim()) return this.ServerResponse.createByErrorMsg('添加品类参数错误');
 
     const shopRow = await this.ShopModel.findOne({ where: { id: shopId } });
