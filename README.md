@@ -1,16 +1,5 @@
-# egg-commerce
-
-1.找到config/config.default.js 和config/plugin.js 
-
-2.CREATE DATABASE IF NOT EXISTS egg_commerce DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
-
-3.然后找到在config/config.default.js 配置你的数据库环境
-
-```bash
-$ npm i
-$ npm run dev
-$ open http://localhost:7071/
-```
+# egg-xyy
+1.CREATE DATABASE IF NOT EXISTS egg_commerce DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
 
 ### API 文档
 [用户模块](https://github.com/sfyr111/egg-commerce/wiki/%E7%94%A8%E6%88%B7%E6%A8%A1%E5%9D%97)
