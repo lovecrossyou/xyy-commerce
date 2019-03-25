@@ -1,5 +1,6 @@
 const Controller = require('egg').Controller;
 const _ = require('lodash');
+const ms = require('ms');
 
 class UserController extends Controller {
   constructor(ctx) {
@@ -21,12 +22,11 @@ class UserController extends Controller {
   async login() {
     const { username, password, code } = this.ctx.request.body;
     const response = await this.UserService.login(username, password, code);
-    // 生成token
-    const tokenResponse = await this.tokenService.saveToken(response.data);
-    if (tokenResponse.isSuccess()) {
+    if (response.isSuccess()) {
       this.session.currentUser = response.getData();
     }
-    this.ctx.body = tokenResponse;
+    this.ctx.session.maxAge = ms('30d');
+    this.ctx.body = response;
   }
 
   // 登出
