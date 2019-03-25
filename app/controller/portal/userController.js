@@ -8,7 +8,6 @@ class UserController extends Controller {
     this.session = ctx.session;
     this.UserModel = ctx.model.UserModel;
     this.UserService = ctx.service.userService;
-    this.tokenService = ctx.service.tokenService;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
   }
