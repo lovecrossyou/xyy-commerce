@@ -67,6 +67,7 @@ module.exports = app => {
       // const orderGoodsDetail = await this.OrderItemModel.findAll({ where: { userId, orderNum }}).map(row => row && row.toJSON())
 
       const result = await alipayf2f.createQRPay(this.alipayData(order));
+      console.log('生成支付二维码 result ',result)
       if (result.code !== '10000') return this.ServerResponse.createByErrorMsg('创建支付宝失败');
 
       const { filename, url } = this.saveQrCode(result);
