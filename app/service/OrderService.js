@@ -100,32 +100,29 @@ module.exports = app => {
 
     /**
      * 
-     * @param {微信支付} orderData 
+     * @param {微信支付} orderNum 
      */
-    async wxpay(orderData) {
-      const out_trade_no = orderData.out_trade_no;
-      const { title, price, trade_type } = orderData;
+    async wxpay(orderNum) {
+      const { id: userId } = this.session.currentUser;
+      const order = await this.OrderModel.findOne({ where: { userId, orderNum } }).then(row => row && row.toJSON());
       const api = new tenpay(wxpayConfig, true);
-      let result, prepay_id ;
+      let result, prepay_id ,trade_type='APP';
       if (trade_type !== 'APP') {
         result = await api.getPayParams({
-          out_trade_no: out_trade_no,
-          body: title,
-          total_fee: price,
+          out_trade_no: order.orderNum.toString(),
+          body: `订单${order.orderNum}购买商品共${order.payment}元`,
+          total_fee: Math.round(Number(order.payment)*100,0),
           openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE'
-        })
-        //
-        console.log('JSAPI##### ', result)
+        })        
         const result_package = result.package ;
-
         prepay_id = result_package.split('=')[1];
         result = await api.getPayParamsByPrepay({ prepay_id });
       }
       else {
         result = await api.unifiedOrder({
-          out_trade_no: out_trade_no,
-          body: title,
-          total_fee: price,
+          out_trade_no: order.orderNum.toString(),
+          body: `订单${order.orderNum}购买商品共${order.payment}元`,
+          total_fee: Math.round(Number(order.payment)*100,0),
           trade_type: trade_type,// APP
         });
         prepay_id = result.prepay_id;
@@ -183,7 +180,10 @@ module.exports = app => {
     }
 
     async createOrder(shippingId) {
-      const { id: userId } = this.session.currentUser
+      const { id: userId } = this.session.currentUser;
+      console.log('shippingId ',shippingId);
+      console.log('userId ',userId);
+
       const shipping = await this.ShippingModel.findOne({ where: { id: shippingId, userId } }).then(r => r && r.toJSON())
       if (!shipping) return this.ServerResponse.createByErrorMsg('用户无该收货地址')
       // 购物车中获取数据
@@ -200,7 +200,7 @@ module.exports = app => {
       const orderItemList = await this._bulkCreateOrderItemArr(orderItemArr, orderNum)
       // 更新库存
       await this._reduceUpdateProductStock(orderItemList)
-      // 清空购物车
+      // 清空购物车[]
       await this._cleanCart(cartListWithProduct)
 
       // 组装及处理返回数据， 返回订单详情，收货地址，订单的各产品

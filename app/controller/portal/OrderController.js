@@ -87,16 +87,9 @@ class OrderController extends Controller {
    * 微信支付
    */
   async wxpay() {
-    const d = new Date();
-    const orderData = {
-      title: '辣条1',
-      out_trade_no: d.getTime().toString(),
-      price: '1',
-      // trade_type: 'JSAPI',
-      trade_type: 'APP',
-    };
-    const code_url = await this.service.orderService.wxpay(orderData);
-    this.ctx.body = code_url;
+    const { orderNum } = this.request.body;
+    const response = await this.OrderService.wxpay(orderNum);
+    this.ctx.body = response;
   }
 }
 
