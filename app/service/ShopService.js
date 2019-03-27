@@ -100,6 +100,23 @@ class ShopService extends Service {
     if (!shop) return this.ServerResponse.createByErrorMsg('找不到当前店铺');
     return this.ServerResponse.createBySuccessData(shop.toJSON());
   }
+  
+  async getShopListNearBy({latiude,longitude,pageNum=1, pageSize=10}){
+    const { count, rows } = await this.ShopModel.findAndCount({
+      // where: { orderNum },
+      // order: [['id', 'DESC']],
+      limit: Number(pageSize | 0),
+      offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
+    });
+    if (rows.length < 1) this.ServerResponse.createBySuccessMsg('附近没有店铺');
+    const shopList = rows.map(row => row && row.toJSON());
+    return this.ServerResponse.createBySuccessData({
+      shopList,
+      pageNum,
+      pageSize,
+      total: count,
+    });
+  }
 }
 
 module.exports = ShopService;
