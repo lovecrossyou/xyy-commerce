@@ -33,7 +33,7 @@ exports.cors = {
 //   package: 'egg-oss',
 // };
 
-// exports.alinode = {
-//   enable: true,
-//   package: 'egg-alinode',
-// };
+exports.alinode = {
+  enable: true,
+  package: 'egg-alinode',
+};

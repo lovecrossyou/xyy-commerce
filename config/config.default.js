@@ -70,6 +70,10 @@ module.exports = appInfo => {
   //     timeout: '60s',
   //   },
   // };
+  exports.alinode = {
+    appid: '78462',
+    secret: '73fc4ebc7bdad892daa164de42bf24a547670df6',
+  };
 
   config.multipart = {
     mode: 'file',
