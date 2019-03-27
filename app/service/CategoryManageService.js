@@ -6,7 +6,7 @@ class CategoryManageService extends Service {
     super(ctx);
     this.ShopModel = ctx.model.ShopModel;
     this.CategoryModel = ctx.model.CategoryModel;
-
+    this.session = ctx.session;
     this.ServerResponse = ctx.response.ServerResponse;
   }
 
@@ -18,12 +18,14 @@ class CategoryManageService extends Service {
    * @param parentId {Number} 父类别id
    * @return {*}
    */
-  async addCategory(name, summary = '', type = 0, parentId = 0, shopId) {
+  async addCategory(name, summary = '', type = 0, parentId = 0) {
     if (!name.trim()) return this.ServerResponse.createByErrorMsg('添加品类参数错误');
+    const { id: userId } = this.session.currentUser;
 
-    const shopRow = await this.ShopModel.findOne({ where: { id: shopId } });
+    const shopRow = await this.ShopModel.findOne({ where: { userId } }).then(row => row && row.toJSON());
     if (!shopRow) return this.ServerResponse.createByErrorMsg('查找店铺信息失败');
-    const categoryRow = await this.CategoryModel.create({ name, parentId, summary, type });
+    const { id: shopId } = shopRow;
+    const categoryRow = await this.CategoryModel.create({ name, parentId, summary, type, shopId });
     if (!categoryRow) return this.ServerResponse.createByErrorMsg('添加品类失败');
     const category = categoryRow.toJSON();
     return this.ServerResponse.createBySuccessMsgAndData('添加品类成功', category);

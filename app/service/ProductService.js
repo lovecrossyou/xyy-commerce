@@ -46,7 +46,7 @@ class ProductService extends Service {
       pageSize,
       list: rows,
       total: count,
-      host: this.config.oss.client.endpoint,
+      // host: this.config.oss.client.endpoint,
     });
   }
 
@@ -79,7 +79,7 @@ class ProductService extends Service {
       categoryName,
       list: rows,
       total: count,
-      host: this.config.oss.client.endpoint,
+      // host: this.config.oss.client.endpoint,
     });
   }
 }

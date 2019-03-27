@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise */
 const Service = require('egg').Service;
 const _ = require('lodash');
 
@@ -6,7 +7,7 @@ class ProductManageService extends Service {
     super(ctx);
     this.ProductModel = ctx.model.ProductModel;
     this.ShopModel = ctx.model.ShopModel;
-    this.ShopModel = ctx.model.ShopModel;
+    this.session = ctx.session;
     this.CategoryModel = ctx.model.CategoryModel;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
@@ -25,8 +26,12 @@ class ProductManageService extends Service {
     const categoryRow = await this.CategoryModel.findOne({ where: { id: product.categoryId } });
     if (!categoryRow) return this.ServerResponse.createByErrorMsg('分类信息不存在');
     // 查找店铺
-    const shopRow = await this.ShopModel.findOne({ where: { id: product.shopId } });
-    if (!shopRow) return this.ServerResponse.createByErrorMsg('店铺信息不存在');
+    const { id: userId } = this.session.currentUser;
+
+    const shopRow = await this.ShopModel.findOne({ where: { userId } }).then(row => row && row.toJSON());
+    if (!shopRow) return this.ServerResponse.createByErrorMsg('查找店铺信息失败');
+    const { id: shopId } = shopRow;
+    product.shopId = shopId;
     // 查询商品
     const resultRow = await this.ProductModel.findOne({ where: { id: product.id } });
     let productRow,
@@ -76,7 +81,8 @@ class ProductManageService extends Service {
       //   { model: this.CategoryModel, as: 'categoryId', attributes: ['name'] }
       // ]
     });
-    if (!productRow) this.ServerResponse.createByErrorMsg('产品已下架或删除');
+    console.log('productRow ', productRow);
+    if (!productRow) return this.ServerResponse.createByErrorMsg('产品已下架或删除');
     return this.ServerResponse.createBySuccessData(productRow.toJSON());
   }
 
@@ -90,6 +96,7 @@ class ProductManageService extends Service {
     const { count, rows } = await this.ProductModel.findAndCount({
       // attributes: { exclude: ['createTime', 'updateTime'] },
       order: [[ 'id', 'ASC' ]],
+      // eslint-disable-next-line no-bitwise
       limit: Number(pageSize | 0),
       offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
     });
@@ -100,7 +107,7 @@ class ProductManageService extends Service {
       pageSize,
       list: rows,
       total: count,
-      host: this.config.oss.client.endpoint,
+      // host: this.config.oss.client.endpoint,
     });
   }
 
@@ -119,7 +126,7 @@ class ProductManageService extends Service {
       if (!product) return this.ServerResponse.createByErrorMsg('产品id错误');
       return this.ServerResponse.createBySuccessData({
         product,
-        host: this.config.oss.client.endpoint,
+        // host: this.config.oss.client.endpoint,
       });
     } else if (productName && !productId) {
       // TODO 按名称分页搜索 返回产品列表
@@ -137,7 +144,7 @@ class ProductManageService extends Service {
         pageSize,
         list: rows,
         total: count,
-        host: this.config.oss.client.endpoint,
+        // host: this.config.oss.client.endpoint,
       });
     }
     return this.ServerResponse.createByErrorCodeMsg(this.ResponseCode.ILLEGAL_ARGUMENT, 'ILLEGAL_ARGUMENT');
