@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise */
 const Service = require('egg').Service;
 const _ = require('lodash');
 const { ON_SALE } = require('../common/product');
