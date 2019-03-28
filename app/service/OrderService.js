@@ -110,7 +110,7 @@ module.exports = app => {
     async wxpay(orderNum) {
       const { id: userId } = this.session.currentUser;
       const order = await this.OrderModel.findOne({ where: { userId, orderNum } }).then(row => row && row.toJSON());
-      if (!order) this.ServerResponse.createByErrorMsg('用户没有该订单');
+      if (!order) return this.ServerResponse.createByErrorMsg('用户没有该订单');
       if (order.status >= OrderStatus.PAID.CODE) return this.ServerResponse.createByErrorMsg('该订单不可支付');
 
       let result,
