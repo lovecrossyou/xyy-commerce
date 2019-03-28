@@ -106,14 +106,17 @@ module.exports = app => {
     async wxpay(orderNum) {
       const { id: userId } = this.session.currentUser;
       const order = await this.OrderModel.findOne({ where: { userId, orderNum } }).then(row => row && row.toJSON());
+      if (!order) this.ServerResponse.createByErrorMsg('用户没有该订单');
+      if (order.status >= OrderStatus.PAID.CODE) return this.ServerResponse.createByErrorMsg('该订单不可支付');
+
       const api = new tenpay(wxpayConfig, true);
-      let result, prepay_id ,trade_type='APP';
+      let result, prepay_id, trade_type = 'APP';
       if (trade_type !== 'APP') {
         result = await api.getPayParams({
           out_trade_no: order.orderNum.toString(),
           body: `订单${order.orderNum}购买商品共${order.payment}元`,
-          total_fee: Math.round(Number(order.payment)*100,0),
-          openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE'
+          total_fee: Math.round(Number(order.payment) * 100, 0),
+          openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE',
         })        
         const result_package = result.package ;
         prepay_id = result_package.split('=')[1];
@@ -123,8 +126,8 @@ module.exports = app => {
         result = await api.unifiedOrder({
           out_trade_no: order.orderNum.toString(),
           body: `订单${order.orderNum}购买商品共${order.payment}元`,
-          total_fee: Math.round(Number(order.payment)*100,0),
-          trade_type: trade_type,// APP
+          total_fee: Math.round(Number(order.payment) * 100, 0),
+          trade_type, // APP
         });
         prepay_id = result.prepay_id;
         result = await api.getAppParamsByPrepay({ prepay_id });
