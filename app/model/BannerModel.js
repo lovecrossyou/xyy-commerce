@@ -3,7 +3,7 @@ const { ROLE_CUSTOMER } = require('../common/role');
 module.exports = app => {
   const { INTEGER, STRING, DATE, UUID, UUIDV4 } = app.Sequelize;
 
-  const BannerModel = app.model.define('banner', {
+  const BannerModel = app.model.define('banners', {
     id: {
       type: UUID,
       defaultValue: UUIDV4,
@@ -14,7 +14,10 @@ module.exports = app => {
     image_path: {
       type: STRING(50),
       allowNull: false,
-      unique: true,
+    },
+    link_path: {
+      type: STRING(50),
+      allowNull: true,
     },
     title: {
       type: STRING(20),
@@ -22,7 +25,7 @@ module.exports = app => {
     },
     type: {
       type: STRING(10),
-      allowNull: false,
+      allowNull: true,
       defaultValue: ROLE_CUSTOMER,
     },
     extra: {
@@ -41,9 +44,9 @@ module.exports = app => {
     },
   });
 
-  BannerModel.beforeBulkUpdate(user => {
-    user.attributes.updateTime = new Date();
-    return user;
+  BannerModel.beforeBulkUpdate(banner => {
+    banner.attributes.updateTime = new Date();
+    return banner;
   });
 
   return BannerModel;
