@@ -17,7 +17,7 @@ class BannerManageController extends Controller {
    */
   async createOrUpdate() {
     const params = this.ctx.request.body;
-    const response = await this.BannerService.saveOrUpdateProduct(params);
+    const response = await this.BannerService.saveOrUpdate(params);
     this.ctx.body = response;
   }
 

@@ -15,7 +15,7 @@ class BannerService extends Service {
    *
    * @param {*创建banner} banner
    */
-  async saveOrUpdateProduct(banner) {
+  async saveOrUpdate(banner) {
     if (!banner) return this.ServerResponse.createByErrorMsg('输入参数有误');
     // 查询商品
     const resultRow = await this.BannerModel.findOne({ where: { id: banner.id } });
