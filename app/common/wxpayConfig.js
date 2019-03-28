@@ -8,7 +8,7 @@ module.exports = {
   wxappsecret: '2cb17e31c06f5062c6fb19b49cd1cae8',
   mchid: '1525281061',
   partnerKey: '1f0506f1a0336eada6fd7b3f43e21130',
-  notify_url: 'http://127.0.0.1:7001/notifyUrl',
+  notify_url: 'http://127.0.0.1:7001/order/wxpaycallback',
   spbill_create_ip: '127.0.0.1',
 };
 

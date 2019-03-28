@@ -6,6 +6,8 @@ module.exports = app => {
 
   app.router.post('/order/alipaycallback', app.controller.portal.orderController.alipayCallback);
 
+  app.router.post('/order/wxpaycallback', app.controller.portal.orderController.wxpayCallback);
+
   app.router.post('/order/mobilePay', checkLogin, app.controller.portal.orderController.mobilePay);
 
   app.router.post('/order/create', checkLogin, app.controller.portal.orderController.create);

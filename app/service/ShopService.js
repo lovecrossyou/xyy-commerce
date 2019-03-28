@@ -1,3 +1,5 @@
+/* eslint-disable no-bitwise */
+/* eslint-disable jsdoc/check-param-names */
 const Service = require('egg').Service;
 const _ = require('lodash');
 const { SHOPNAME } = require('../common/type');
@@ -48,12 +50,12 @@ class ShopService extends Service {
    * @return {Promise.<void>}
    */
   async register(shop) {
-    // 店铺存在报错
+    // 店铺已存在
     const validShopNameResponse = await this.checkValid(SHOPNAME, shop.name);
     if (!validShopNameResponse.isSuccess()) return validShopNameResponse;
     try {
       const { id: userId } = this.session.currentUser;
-      shop = { ...shop, userId }
+      shop = { ...shop, userId };
       shop = await this.ShopModel.create(shop);
       if (!shop) return this.ServerResponse.createByErrorMsg('注册失败1');
       return this.ServerResponse.createBySuccessMsgAndData('注册成功', shop);
@@ -100,22 +102,22 @@ class ShopService extends Service {
     if (!shop) return this.ServerResponse.createByErrorMsg('找不到当前店铺');
     return this.ServerResponse.createBySuccessData(shop.toJSON());
   }
-  
-  async getShopListNearBy({latiude,longitude,pageNum=1, pageSize=10}){
-    const { count, rows } = await this.ShopModel.findAndCount({
-      // where: { orderNum },
-      // order: [['id', 'DESC']],
-      limit: Number(pageSize | 0),
-      offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
+
+  /**
+   *
+   * @param {经纬度查询附近店铺列表} param0
+   */
+  async getShopListNearBy({ latiude, longitude, pageNum = 1, pageSize = 10, range = 50000 }) {
+    // 距离+排序+多少公里范围的条件检索
+    // 默认检索检索出5公里范围
+    const queryString = `select * from (select address,category,promotion_info,phone, ROUND(6378.138*2*ASIN(SQRT(POW(SIN((${latiude}*PI()/180-latitude*PI()/180)/2),2)+COS(${latiude}*PI()/180)*COS(latitude*PI()/180)*POW(SIN((${longitude}*PI()/180-longitude*PI()/180)/2),2)))*1000) AS distance from shops order by distance ) as a where a.distance<=${range * 1000} LIMIT ${pageNum},${pageSize}`;
+    const [ results ] = await this.app.model.query(queryString);
+    const shopList = results.map(row => {
+      return {
+        ...row,
+      };
     });
-    if (rows.length < 1) this.ServerResponse.createBySuccessMsg('附近没有店铺');
-    const shopList = rows.map(row => row && row.toJSON());
-    return this.ServerResponse.createBySuccessData({
-      shopList,
-      pageNum,
-      pageSize,
-      total: count,
-    });
+    return this.ServerResponse.createBySuccessMsgAndData('查询附近店铺成功', shopList);
   }
 }
 

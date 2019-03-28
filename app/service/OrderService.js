@@ -1,3 +1,6 @@
+/* eslint-disable jsdoc/require-param */
+/* eslint-disable jsdoc/check-param-names */
+/* eslint-disable no-bitwise */
 const Service = require('egg').Service;
 const fs = require('fs');
 const path = require('path');
@@ -10,14 +13,15 @@ const alipayf2f = new alipayftof(alipayf2fConfig);
 const tenpay = require('tenpay');
 
 // 要求在env = test 环境下
-process.env.NODE_ENV = 'test'
+process.env.NODE_ENV = 'test';
 const Alipay = require('alipay-mobile');
 const options = {
   app_id: alipayf2fConfig.appid.toString(),
   appPrivKeyFile: alipayf2fConfig.merchantPrivateKey,
   alipayPubKeyFile: alipayf2fConfig.alipayPublicKey,
-}
+};
 const alipayService = new Alipay(options);
+const wxpayService = new tenpay(wxpayConfig, true);
 
 
 const OrderStatus = require('../common/orderStatus');
@@ -48,11 +52,11 @@ module.exports = app => {
       this.ProductModel.hasOne(this.CartModel, { foreignKey: 'id' });
       this.CartModel.belongsTo(this.ProductModel, { foreignKey: 'productId' });
 
-      this.OrderItemModel.hasMany(this.OrderModel, { foreignKey: 'orderNum', targetKey: 'orderNum' })
-      this.OrderModel.belongsTo(this.OrderItemModel, { foreignKey: 'orderNum', targetKey: 'orderNum' })
+      this.OrderItemModel.hasMany(this.OrderModel, { foreignKey: 'orderNum', targetKey: 'orderNum' });
+      this.OrderModel.belongsTo(this.OrderItemModel, { foreignKey: 'orderNum', targetKey: 'orderNum' });
 
-      this.ShippingModel.hasOne(this.OrderModel, { foreignKey: 'id' })
-      this.OrderModel.belongsTo(this.ShippingModel, { foreignKey: 'shippingId' })
+      this.ShippingModel.hasOne(this.OrderModel, { foreignKey: 'id' });
+      this.OrderModel.belongsTo(this.ShippingModel, { foreignKey: 'shippingId' });
     }
     /**
      * @feature 生成支付二维码 用到orderNum、userId、qrcode
@@ -67,7 +71,7 @@ module.exports = app => {
       // const orderGoodsDetail = await this.OrderItemModel.findAll({ where: { userId, orderNum }}).map(row => row && row.toJSON())
 
       const result = await alipayf2f.createQRPay(this.alipayData(order));
-      console.log('生成支付二维码 result ',result)
+      console.log('生成支付二维码 result ', result);
       if (result.code !== '10000') return this.ServerResponse.createByErrorMsg('创建支付宝失败');
 
       const { filename, url } = this.saveQrCode(result);
@@ -94,14 +98,14 @@ module.exports = app => {
       };
       // const basicParams = { return_url: 'http://localhost:7071', notify_url: alipayf2fConfig.notifyUrl };
       const result = await alipayService.createOrder(data);
-      if (result.code !== 0) return this.ServerResponse.createByErrorMsg('创建支付订单错误')
-      console.log(result.data)
-      return this.ServerResponse.createBySuccessMsgAndData('支付宝手机支付地址创建成功', result)
+      if (result.code !== 0) return this.ServerResponse.createByErrorMsg('创建支付订单错误');
+      console.log(result.data);
+      return this.ServerResponse.createBySuccessMsgAndData('支付宝手机支付地址创建成功', result);
     }
 
     /**
-     * 
-     * @param {微信支付} orderNum 
+     *
+     * @param {微信支付} orderNum
      */
     async wxpay(orderNum) {
       const { id: userId } = this.session.currentUser;
@@ -109,33 +113,34 @@ module.exports = app => {
       if (!order) this.ServerResponse.createByErrorMsg('用户没有该订单');
       if (order.status >= OrderStatus.PAID.CODE) return this.ServerResponse.createByErrorMsg('该订单不可支付');
 
-      const api = new tenpay(wxpayConfig, true);
-      let result, prepay_id, trade_type = 'APP';
+      let result,
+        prepay_id,
+        // eslint-disable-next-line prefer-const
+        trade_type = 'APP';
       if (trade_type !== 'APP') {
-        result = await api.getPayParams({
+        result = await wxpayService.getPayParams({
           out_trade_no: order.orderNum.toString(),
           body: `订单${order.orderNum}购买商品共${order.payment}元`,
           total_fee: Math.round(Number(order.payment) * 100, 0),
           openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE',
-        })        
-        const result_package = result.package ;
+        });
+        const result_package = result.package;
         prepay_id = result_package.split('=')[1];
-        result = await api.getPayParamsByPrepay({ prepay_id });
-      }
-      else {
-        result = await api.unifiedOrder({
+        result = await wxpayService.getPayParamsByPrepay({ prepay_id });
+      } else {
+        result = await wxpayService.unifiedOrder({
           out_trade_no: order.orderNum.toString(),
           body: `订单${order.orderNum}购买商品共${order.payment}元`,
           total_fee: Math.round(Number(order.payment) * 100, 0),
           trade_type, // APP
         });
         prepay_id = result.prepay_id;
-        result = await api.getAppParamsByPrepay({ prepay_id });
+        result = await wxpayService.getAppParamsByPrepay({ prepay_id });
       }
       return new Promise(resolve => {
         const resData = this.ServerResponse.createBySuccessMsgAndData('生成微信支付信息成功', result);
         resolve(resData);
-      })
+      });
     }
 
 
@@ -165,9 +170,69 @@ module.exports = app => {
       return this.createPayInfo(order.userId, order.orderNum, PayPlatform.ALIPAY.CODE, tradeNo, tradeStatus);
     }
 
-    async wxpayCallback(body){
-      
+    /**
+     *
+     * @param {微信支付回调} body
+     */
+    async wxpayCallback(body) {
+      if (!body) return this.ServerResponse.createByErrorMsg('非法请求验证不通过');
+      const { result_code, return_code, out_trade_no, openid, transaction_id } = body;
+      if (result_code === 'SUCCESS' && return_code === 'SUCCESS') { // 验证 是否 微信 回调
+        // 是否是真实的订单
+        const isRealOrder = true;
+        if (isRealOrder) {
+          // 微信支付回调更新订单支付状态，更新订单支付状态成功，订单号
+        } else {
+          // 微信支付回调更新订单支付状态，更新订单支付状态失败，订单号
+        }
+      } else {
+        return this.ServerResponse.createByErrorMsg('微信支付回调参数非法');
+      }
     }
+
+    // 微信支付 查询订单
+    // let result = await api.orderQuery({
+    //   // transaction_id, out_trade_no 二选一
+    //   // transaction_id: '微信的订单号',
+    //   out_trade_no: '商户内部订单号'
+    // });
+
+    // 微信支付 撤销订单
+    // let result = await api.reverse({
+    //   // transaction_id, out_trade_no 二选一
+    //   // transaction_id: '微信的订单号',
+    //   out_trade_no: '商户内部订单号'
+    // });
+
+    // 微信支付 关闭订单
+    // let result = await api.closeOrder({
+    //   out_trade_no: '商户内部订单号'
+    // });
+
+    // 微信支付 申请退款
+    // let result = await api.refund({
+    //   // transaction_id, out_trade_no 二选一
+    //   // transaction_id: '微信的订单号',
+    //   out_trade_no: '商户内部订单号',
+    //   out_refund_no: '商户内部退款单号',
+    //   total_fee: '订单金额(分)',
+    //   refund_fee: '退款金额(分)'
+    // });
+
+    // 微信支付 查询退款
+    // let result = await api.refundQuery({
+    //   // 以下参数 四选一
+    //   // transaction_id: '微信的订单号',
+    //   // out_trade_no: '商户内部订单号',
+    //   // out_refund_no: '商户内部退款单号',
+    //   refund_id: '微信退款单号'
+    // });
+    // 微信支付 发放代金券
+    // let result = await api.sendCoupon({
+    //   coupon_stock_id: '代金券批次id',
+    //   partner_trade_no: '商户单据号',
+    //   openid: '用户openid'
+    // });
 
     /**
      * @feature 查询订单状态
@@ -185,31 +250,28 @@ module.exports = app => {
 
     async createOrder(shippingId) {
       const { id: userId } = this.session.currentUser;
-      console.log('shippingId ',shippingId);
-      console.log('userId ',userId);
-
-      const shipping = await this.ShippingModel.findOne({ where: { id: shippingId, userId } }).then(r => r && r.toJSON())
-      if (!shipping) return this.ServerResponse.createByErrorMsg('用户无该收货地址')
+      const shipping = await this.ShippingModel.findOne({ where: { id: shippingId, userId } }).then(r => r && r.toJSON());
+      if (!shipping) return this.ServerResponse.createByErrorMsg('用户无该收货地址');
       // 购物车中获取数据
-      const response = await this._getCartListWithProduct(userId)
-      if (!response.isSuccess()) return response
-      const cartListWithProduct = response.getData()
+      const response = await this._getCartListWithProduct(userId);
+      if (!response.isSuccess()) return response;
+      const cartListWithProduct = response.getData();
 
-      const orderNum = this._createAOrderNum()
-      const orderItemArr = await this._cartListToOrderItemArr(cartListWithProduct)
-      const orderTotalPrice = orderItemArr.reduce((total, item) => total + item.totalPrice, 0)
-      const order = await this._createPayOrder(userId, shippingId, orderTotalPrice, orderNum)
-      if (!order) return this.ServerResponse.createByErrorMsg('创建订单错误')
+      const orderNum = this._createAOrderNum();
+      const orderItemArr = await this._cartListToOrderItemArr(cartListWithProduct);
+      const orderTotalPrice = orderItemArr.reduce((total, item) => total + item.totalPrice, 0);
+      const order = await this._createPayOrder(userId, shippingId, orderTotalPrice, orderNum);
+      if (!order) return this.ServerResponse.createByErrorMsg('创建订单错误');
       // 批量插入orderItem
-      const orderItemList = await this._bulkCreateOrderItemArr(orderItemArr, orderNum)
+      const orderItemList = await this._bulkCreateOrderItemArr(orderItemArr, orderNum);
       // 更新库存
-      await this._reduceUpdateProductStock(orderItemList)
+      await this._reduceUpdateProductStock(orderItemList);
       // 清空购物车[]
-      await this._cleanCart(cartListWithProduct)
+      await this._cleanCart(cartListWithProduct);
 
       // 组装及处理返回数据， 返回订单详情，收货地址，订单的各产品
-      const orderDetail = await this._createOrderDetail(order, orderItemList, shippingId)
-      return this.ServerResponse.createBySuccessMsgAndData('创建订单成功', orderDetail)
+      const orderDetail = await this._createOrderDetail(order, orderItemList, shippingId);
+      return this.ServerResponse.createBySuccessMsgAndData('创建订单成功', orderDetail);
     }
 
     /**
@@ -218,13 +280,13 @@ module.exports = app => {
      * @returns {Promise.<object>}
      */
     async cancel(orderNum) {
-      const { id: userId } = this.session.currentUser
-      const orderRow = await this.OrderModel.findOne({ where: { userId, orderNum } })
-      if (!orderRow) return this.ServerResponse.createByErrorMsg('用户不存在该订单')
-      if (orderRow.get('status') !== ORDER_STATUS_MAP.NO_PAY.CODE) return this.ServerResponse.createByErrorMsg('订单无法取消')
-      const updateRow = await orderRow.update({ status: ORDER_STATUS_MAP.CANCELED.CODE, closeTime: new Date() }, { individualHooks: true })
-      if (!updateRow) return this.ServerResponse.createByErrorMsg('取消订单失败')
-      return this.ServerResponse.createBySuccessMsgAndData('取消订单成功', updateRow.toJSON())
+      const { id: userId } = this.session.currentUser;
+      const orderRow = await this.OrderModel.findOne({ where: { userId, orderNum } });
+      if (!orderRow) return this.ServerResponse.createByErrorMsg('用户不存在该订单');
+      if (orderRow.get('status') !== ORDER_STATUS_MAP.NO_PAY.CODE) return this.ServerResponse.createByErrorMsg('订单无法取消');
+      const updateRow = await orderRow.update({ status: ORDER_STATUS_MAP.CANCELED.CODE, closeTime: new Date() }, { individualHooks: true });
+      if (!updateRow) return this.ServerResponse.createByErrorMsg('取消订单失败');
+      return this.ServerResponse.createBySuccessMsgAndData('取消订单成功', updateRow.toJSON());
     }
 
     /**
@@ -232,15 +294,15 @@ module.exports = app => {
      * @returns {Promise.<*>}
      */
     async getOrderCartProduct() {
-      const { id: userId } = this.session.currentUser
+      const { id: userId } = this.session.currentUser;
       // 购物车中获取数据
-      const response = await this._getCartListWithProduct(userId)
-      if (!response.isSuccess()) return response
-      const cartListWithProduct = response.getData()
+      const response = await this._getCartListWithProduct(userId);
+      if (!response.isSuccess()) return response;
+      const cartListWithProduct = response.getData();
 
-      const orderItemArr = await this._cartListToOrderItemArr(cartListWithProduct)
-      const orderTotalPrice = orderItemArr.reduce((total, item) => total + item.totalPrice, 0).toFixed(2)
-      return this.ServerResponse.createBySuccessMsgAndData('订单快照', { orderItemArr, orderTotalPrice, host: 'localhost:7071' })
+      const orderItemArr = await this._cartListToOrderItemArr(cartListWithProduct);
+      const orderTotalPrice = orderItemArr.reduce((total, item) => total + item.totalPrice, 0).toFixed(2);
+      return this.ServerResponse.createBySuccessMsgAndData('订单快照', { orderItemArr, orderTotalPrice, host: 'localhost:7071' });
     }
 
     /**
@@ -249,29 +311,29 @@ module.exports = app => {
      * @returns {Promise.<object>}
      */
     async getDetail(orderNum) {
-      const { id: userId, role } = this.session.currentUser
-      const order = await this.OrderModel.findOne({ where: { orderNum, userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId } }).then(r => r && r.toJSON())
-      if (!order) return this.ServerResponse.createByErrorMsg('订单不存在')
-      const orderItem = await this.OrderItemModel.findAll({ where: { orderNum, userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId } }).then(rows => rows && rows.map(r => r.toJSON()))
-      if (orderItem.length < 1) return this.ServerResponse.createByErrorMsg('订单不存在')
-      const orderDetail = await this._createOrderDetail(order, orderItem, order.shippingId)
-      return this.ServerResponse.createBySuccessMsgAndData('订单详情', orderDetail)
+      const { id: userId, role } = this.session.currentUser;
+      const order = await this.OrderModel.findOne({ where: { orderNum, userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId } }).then(r => r && r.toJSON());
+      if (!order) return this.ServerResponse.createByErrorMsg('订单不存在');
+      const orderItem = await this.OrderItemModel.findAll({ where: { orderNum, userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId } }).then(rows => rows && rows.map(r => r.toJSON()));
+      if (orderItem.length < 1) return this.ServerResponse.createByErrorMsg('订单不存在');
+      const orderDetail = await this._createOrderDetail(order, orderItem, order.shippingId);
+      return this.ServerResponse.createBySuccessMsgAndData('订单详情', orderDetail);
     }
 
     async manageSendGood(orderNum) {
-      const orderRow = await this.OrderModel.findOne({ where: { orderNum } })
-      if (!orderRow) return this.ServerResponse.createByErrorMsg('订单不存在1')
+      const orderRow = await this.OrderModel.findOne({ where: { orderNum } });
+      if (!orderRow) return this.ServerResponse.createByErrorMsg('订单不存在1');
 
-      const orderItem = await this.OrderItemModel.findAll({ where: { orderNum } }).then(rows => rows && rows.map(r => r.toJSON()))
-      if (orderItem.length < 1) return this.ServerResponse.createByErrorMsg('订单不存在2')
+      const orderItem = await this.OrderItemModel.findAll({ where: { orderNum } }).then(rows => rows && rows.map(r => r.toJSON()));
+      if (orderItem.length < 1) return this.ServerResponse.createByErrorMsg('订单不存在2');
 
-      if (orderRow.get('status') !== ORDER_STATUS_MAP.PAID.CODE) return this.ServerResponse.createByErrorMsg('此订单未完成交易, 不能发货')
-      const updateRow = await orderRow.update({ status: ORDER_STATUS_MAP.SHIPPED.CODE, sendTime: new Date() }, { individualHooks: true })
-      if (!updateRow) return this.ServerResponse.createByErrorMsg('订单发货失败')
+      if (orderRow.get('status') !== ORDER_STATUS_MAP.PAID.CODE) return this.ServerResponse.createByErrorMsg('此订单未完成交易, 不能发货');
+      const updateRow = await orderRow.update({ status: ORDER_STATUS_MAP.SHIPPED.CODE, sendTime: new Date() }, { individualHooks: true });
+      if (!updateRow) return this.ServerResponse.createByErrorMsg('订单发货失败');
 
 
-      const orderDetail = await this._createOrderDetail(updateRow.toJSON(), orderItem, updateRow.get('shippingId'))
-      return this.ServerResponse.createBySuccessMsgAndData('发货成功', orderDetail)
+      const orderDetail = await this._createOrderDetail(updateRow.toJSON(), orderItem, updateRow.get('shippingId'));
+      return this.ServerResponse.createBySuccessMsgAndData('发货成功', orderDetail);
     }
 
     /**
@@ -281,11 +343,12 @@ module.exports = app => {
      * @returns {Promise.<array>}
      */
     async getList({ pageNum = 1, pageSize = 10 }) {
-      const { id: userId, role } = this.session.currentUser
+      const { id: userId, role } = this.session.currentUser;
       // 循环查询解决
       const { count, rows } = await this.OrderModel.findAndCount({
         where: { userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId },
-        order: [['id', 'DESC']],
+        order: [[ 'id', 'DESC' ]],
+        // eslint-disable-next-line no-bitwise
         limit: Number(pageSize | 0),
         offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
       });
@@ -293,12 +356,12 @@ module.exports = app => {
       const orderList = rows.map(row => row && row.toJSON());
 
       const orderListWithOrderItemsAndShipping = await Promise.all(orderList.map(async item => {
-        const orderItemList = await this.OrderItemModel.findAll({ where: { orderNum: item.orderNum } }).then(rows => rows && rows.map(r => r.toJSON()))
-        const shipping = await this.ShippingModel.findOne({ where: { id: item.shippingId } }).then(r => r && r.toJSON())
+        const orderItemList = await this.OrderItemModel.findAll({ where: { orderNum: item.orderNum } }).then(rows => rows && rows.map(r => r.toJSON()));
+        const shipping = await this.ShippingModel.findOne({ where: { id: item.shippingId } }).then(r => r && r.toJSON());
 
-        return { ...item, orderItemList, shipping }
-      }))
-      const list = this._createOrderDetailList(orderListWithOrderItemsAndShipping)
+        return { ...item, orderItemList, shipping };
+      }));
+      const list = this._createOrderDetailList(orderListWithOrderItemsAndShipping);
       // 关联查询解决 bug
       // const orderListWithOrderItemsAndShipping = await this.OrderModel.findAll({
       //     where: { userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId },
@@ -333,7 +396,7 @@ module.exports = app => {
     async search({ orderNum, pageNum = 1, pageSize = 10 }) {
       const { count, rows } = await this.OrderModel.findAndCount({
         where: { orderNum },
-        order: [['id', 'DESC']],
+        order: [[ 'id', 'DESC' ]],
         limit: Number(pageSize | 0),
         offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
       });
@@ -341,13 +404,13 @@ module.exports = app => {
       const orderList = rows.map(row => row && row.toJSON());
 
       const orderListWithOrderItemsAndShipping = await Promise.all(orderList.map(async item => {
-        const orderItemList = await this.OrderItemModel.findAll({ where: { orderNum: item.orderNum } }).then(rows => rows && rows.map(r => r.toJSON()))
-        const shipping = await this.ShippingModel.findOne({ where: { id: item.shippingId } }).then(r => r && r.toJSON())
+        const orderItemList = await this.OrderItemModel.findAll({ where: { orderNum: item.orderNum } }).then(rows => rows && rows.map(r => r.toJSON()));
+        const shipping = await this.ShippingModel.findOne({ where: { id: item.shippingId } }).then(r => r && r.toJSON());
 
-        return { ...item, orderItemList, shipping }
-      }))
+        return { ...item, orderItemList, shipping };
+      }));
 
-      const list = this._createOrderDetailList(orderListWithOrderItemsAndShipping)
+      const list = this._createOrderDetailList(orderListWithOrderItemsAndShipping);
 
       return this.ServerResponse.createBySuccessData({
         list,
@@ -361,17 +424,17 @@ module.exports = app => {
     // 对order 组装orderItem 数组
     _groupList(arr) {
       return arr.reduce((arr, item, index) => {
-        item.orderItemList = []
-        if (!arr[index - 1]) item.orderItemList.push(item.orderItem)
+        item.orderItemList = [];
+        if (!arr[index - 1]) item.orderItemList.push(item.orderItem);
         else {
           if (arr[index - 1].orderItem.orderNum === item.orderItem.orderNum) {
-            arr[index - 1].orderItemList.push(item.orderItem)
-            _.unset(arr[index - 1], 'orderItem')
-            return arr
+            arr[index - 1].orderItemList.push(item.orderItem);
+            _.unset(arr[index - 1], 'orderItem');
+            return arr;
           }
         }
-        return [...arr, item]
-      }, [])
+        return [ ...arr, item ];
+      }, []);
     }
 
     /**
@@ -382,10 +445,10 @@ module.exports = app => {
      */
     _createOrderDetailList(list) {
       return list.map(order => {
-        const paymentType = this._getEnumValueByCode(PAYMENT_TYPE_MAP, order.paymentType)
-        const orderStatus = this._getEnumValueByCode(ORDER_STATUS_MAP, order.status)
-        return { ...order, payment: Number(order.payment).toFixed(2), paymentType, orderStatus }
-      })
+        const paymentType = this._getEnumValueByCode(PAYMENT_TYPE_MAP, order.paymentType);
+        const orderStatus = this._getEnumValueByCode(ORDER_STATUS_MAP, order.status);
+        return { ...order, payment: Number(order.payment).toFixed(2), paymentType, orderStatus };
+      });
     }
 
     /**
@@ -397,52 +460,52 @@ module.exports = app => {
      * @private
      */
     async _createOrderDetail(order, orderItemList, shippingId) {
-      let shipping
-      if (shippingId) shipping = await this.ShippingModel.findOne({ where: { id: shippingId } }).then(r => r && r.toJSON())
+      let shipping;
+      if (shippingId) shipping = await this.ShippingModel.findOne({ where: { id: shippingId } }).then(r => r && r.toJSON());
 
-      const paymentType = this._getEnumValueByCode(PAYMENT_TYPE_MAP, order.paymentType)
-      const orderStatus = this._getEnumValueByCode(ORDER_STATUS_MAP, order.status)
+      const paymentType = this._getEnumValueByCode(PAYMENT_TYPE_MAP, order.paymentType);
+      const orderStatus = this._getEnumValueByCode(ORDER_STATUS_MAP, order.status);
 
-      return { order: { ...order, payment: Number(order.payment).toFixed(2), paymentType, orderStatus }, orderItemList, shipping, host: 'localhost:7071' }
+      return { order: { ...order, payment: Number(order.payment).toFixed(2), paymentType, orderStatus }, orderItemList, shipping, host: 'localhost:7071' };
     }
 
     _getEnumValueByCode(mapper, code) {
-      return mapper[_.findKey(mapper, item => item.CODE === code)].VALUE
+      return mapper[_.findKey(mapper, item => item.CODE === code)].VALUE;
     }
 
     async _getCartListWithProduct(userId) {
       const arr = await this.CartModel.findAll({
         where: { userId, checked: CHECKED },
         include: [{ model: this.ProductModel, where: { id: app.Sequelize.col('productId'), status: ON_SALE.CODE } }],
-      }).then(rows => rows && rows.map(r => r.toJSON()))
+      }).then(rows => rows && rows.map(r => r.toJSON()));
 
-      if (arr.length === 0) return this.ServerResponse.createByErrorMsg('购物车为空')
-      if (!this._checkStock(arr).hasStock) return this.ServerResponse.createByErrorMsg(`${this._checkStock(arr).noStockList[0]}商品库存不足`)
-      return this.ServerResponse.createBySuccessData(arr)
+      if (arr.length === 0) return this.ServerResponse.createByErrorMsg('购物车为空');
+      if (!this._checkStock(arr).hasStock) return this.ServerResponse.createByErrorMsg(`${this._checkStock(arr).noStockList[0]}商品库存不足`);
+      return this.ServerResponse.createBySuccessData(arr);
     }
 
     // 清空购物车
     async _cleanCart(cartList) {
       cartList.forEach(async item => {
-        await this.CartModel.destroy({ where: { id: item.id } })
-      })
+        await this.CartModel.destroy({ where: { id: item.id } });
+      });
     }
 
     // 批量更新库存
     async _reduceUpdateProductStock(orderItemList) {
       orderItemList.forEach(async item => {
-        await this.ProductModel.update({ stock: app.Sequelize.literal(`stock - ${item.quantity}`) }, { where: { id: item.productId } })
-      })
+        await this.ProductModel.update({ stock: app.Sequelize.literal(`stock - ${item.quantity}`) }, { where: { id: item.productId } });
+      });
     }
 
     async _bulkCreateOrderItemArr(orderItemArr, orderNum) {
-      orderItemArr = orderItemArr.map(item => ({ ...item, orderNum }))
-      return await this.OrderItemModel.bulkCreate(orderItemArr).then(rows => rows && rows.map(r => r.toJSON()))
+      orderItemArr = orderItemArr.map(item => ({ ...item, orderNum }));
+      return await this.OrderItemModel.bulkCreate(orderItemArr).then(rows => rows && rows.map(r => r.toJSON()));
     }
 
     _createAOrderNum() {
-      const orderNum = Date.now() + _.random(100)
-      return orderNum
+      const orderNum = Date.now() + _.random(100);
+      return orderNum;
     }
     /**
      * @feature 创建最终支付订单
@@ -457,11 +520,11 @@ module.exports = app => {
         payment,
         orderNum,
         shippingId,
-      }
+      };
       // 发货时间，支付时间
-      const result = await this.OrderModel.create(order).then(r => r && r.toJSON())
-      if (!result) return null
-      return result
+      const result = await this.OrderModel.create(order).then(r => r && r.toJSON());
+      if (!result) return null;
+      return result;
     }
 
     /**
@@ -477,14 +540,14 @@ module.exports = app => {
         productName: item.product.name,
         productImage: item.product.mainImage,
         currentUnitPrice: item.product.price,
-        totalPrice: item.product.price * item.quantity
-      }))
+        totalPrice: item.product.price * item.quantity,
+      }));
       // return await this.OrderItemModel.bulkCreate(orderItemArr).then(rows => rows && rows.map(r => r.toJSON()))
     }
 
     // 生成支付信息
     alipayData(order) {
-      let tradeNo = order.orderNum,
+      const tradeNo = order.orderNum,
         subject = `COOLHEADEDYANG扫码支付,订单号: ${tradeNo}`,
         totalAmount = order.payment,
         body = `订单${tradeNo}购买商品共${totalAmount}元`;
@@ -524,13 +587,13 @@ module.exports = app => {
 
     // 检查库存
     _checkStock(list) {
-      let arr = []
+      const arr = [];
       list.forEach(item => {
         if (item.product.stock < item.quantity) {
-          arr.push(item.product.name)
+          arr.push(item.product.name);
         }
-      })
-      return { hasStock: arr.length === 0, noStockList: arr }
+      });
+      return { hasStock: arr.length === 0, noStockList: arr };
     }
   };
 };
