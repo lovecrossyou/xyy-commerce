@@ -70,10 +70,10 @@ class UserService extends Service {
     });
 
     if (!user) return this.ServerResponse.createByErrorMsg('密码错误');
-        const userInfo = user.toJSON()
-    let redirectTo
-    if (userInfo.role === ROLE_ADMAIN) redirectTo = '/'
-    else redirectTo = ''
+    const userInfo = user.toJSON();
+    let redirectTo;
+    if (userInfo.role === ROLE_ADMAIN) redirectTo = '/';
+    else redirectTo = '';
 
     return this.ServerResponse.createBySuccessMsgAndData('登录成功', { ...userInfo, redirectTo });
   }

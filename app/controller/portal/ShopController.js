@@ -19,6 +19,13 @@ class ShopController extends Controller {
     const response = await this.shopService.getShopListNearBy(params);
     this.ctx.body = response;
   }
+
+  // 查询店铺信息
+  async queryShopInfo() {
+    const { shopId } = this.ctx.params;
+    const response = await this.shopService.queryShopInfo(shopId);
+    this.ctx.body = response;
+  }
 }
 
 

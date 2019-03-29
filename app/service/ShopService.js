@@ -107,10 +107,10 @@ class ShopService extends Service {
    *
    * @param {经纬度查询附近店铺列表} param0
    */
-  async getShopListNearBy({ latiude, longitude, pageNum = 1, pageSize = 10, range = 50000 }) {
+  async getShopListNearBy({ latitude, longitude, pageNum = 1, pageSize = 10, range = 50000 }) {
     // 距离+排序+多少公里范围的条件检索
     // 默认检索检索出5公里范围
-    const queryString = `select * from (select address,image_path,promotion_info,phone, startTime, endTime, ROUND(6378.138*2*ASIN(SQRT(POW(SIN((${latiude}*PI()/180-latitude*PI()/180)/2),2)+COS(${latiude}*PI()/180)*COS(latitude*PI()/180)*POW(SIN((${longitude}*PI()/180-longitude*PI()/180)/2),2)))*1000) AS distance from shops order by distance ) as a where a.distance<=${range * 1000} LIMIT ${pageNum},${pageSize}`;
+    const queryString = `select * from (select id,address,image_path,promotion_info,phone, startTime, endTime, ROUND(6378.138*2*ASIN(SQRT(POW(SIN((${latitude}*PI()/180-latitude*PI()/180)/2),2)+COS(${latitude}*PI()/180)*COS(latitude*PI()/180)*POW(SIN((${longitude}*PI()/180-longitude*PI()/180)/2),2)))*1000) AS distance from shops order by distance ) as a where a.distance<=${range * 1000} LIMIT ${pageNum},${pageSize}`;
     const [ results ] = await this.app.model.query(queryString);
     const shopList = results.map(row => {
       return {
