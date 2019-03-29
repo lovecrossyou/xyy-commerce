@@ -3,6 +3,7 @@
   "rules": {
     "strict":0,
     "no-unused-vars":1,
-    "valid-jsdoc":0
+    "valid-jsdoc":0,
+    "jsdoc/require-param":0
   }
 }
