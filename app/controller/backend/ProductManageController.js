@@ -65,6 +65,7 @@ class ProductManageController extends Controller {
     } catch (e) {
       await sendToWormhole(stream);
       throw new Error(e);
+      // eslint-disable-next-line no-unreachable
       response = this.ServerResponse.createByError('上传图片失败');
     } finally { await sendToWormhole(stream); }
     response = this.ServerResponse.createBySuccessMsgAndData('上传图片成功', {

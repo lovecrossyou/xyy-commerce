@@ -13,16 +13,13 @@ class BannerManageController extends Controller {
   }
 
   /**
-   * 创建banner
+   * 创建 or 更新 banner
    */
   async createOrUpdate() {
     const params = this.ctx.request.body;
     const response = await this.BannerService.saveOrUpdate(params);
     this.ctx.body = response;
   }
-
-  // 更新
-
 
   /**
    * banner列表
