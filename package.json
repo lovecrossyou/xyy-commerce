@@ -41,6 +41,7 @@
     "start": "EGG_SERVER_ENV=prod ENABLE_NODE_LOG=YES egg-scripts start --daemon --title=xyy-commerce -p 8004",
     "stop": "egg-scripts stop --title=xyy-commerce",
     "dev": "egg-bin dev --port 8004",
+    "package":"tar -zcvf ../release.tgz .",
     "test-local": "egg-bin test --full-trace",
     "debug": "egg-bin debug",
     "test": "npm run lint -- --fix && npm run test-local",
