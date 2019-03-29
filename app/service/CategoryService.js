@@ -9,23 +9,7 @@ class CategoryService extends Service {
     this.session = ctx.session;
     this.ServerResponse = ctx.response.ServerResponse;
   }
-
-  /**
-   * @feature 获取某分类下的平级子分类
-   * @param parentId
-   * @return {Promise.<*>}
-   */
-  async getChildParallelCagtegory(parentId = 0, type = 0) {
-    const cagtegoryRows = await this.CategoryModel.findAll({
-      attributes: [ 'id', 'parentId', 'name', 'status' ],
-      where: { parentId, type },
-    }).then(rows => rows && rows.map(r => r.toJSON()));
-    if (cagtegoryRows.length < 1) {
-      this.ctx.logger.info('getChildParallelCagtegory: 未找到当前分类的子分类');
-    }
-    return this.ServerResponse.createBySuccessData(cagtegoryRows);
-  }
-
+  
   /**
    * @param {根据店铺ID查找分类} shopId
    * @param {*} parentId
