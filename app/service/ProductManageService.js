@@ -33,25 +33,29 @@ class ProductManageService extends Service {
     const { id: shopId } = shopRow;
     product.shopId = shopId;
     // 查询商品
-    const resultRow = await this.ProductModel.findOne({ where: { id: product.id } });
-    let productRow,
-      addOrUpdate;
-    if (!resultRow) {
+    try {
+      const resultRow = await this.ProductModel.findOne({ where: { id: product.id } });
+      let productRow,
+        addOrUpdate;
+      if (!resultRow) {
       // TODO 添加
-      productRow = await this.ProductModel.create(product);
-      addOrUpdate = '添加';
-      if (!productRow) return this.ServerResponse.createByErrorMsg('添加产品失败');
-    } else {
+        productRow = await this.ProductModel.create(product);
+        addOrUpdate = '添加';
+        if (!productRow) return this.ServerResponse.createByErrorMsg('添加产品失败');
+      } else {
       // TODO 更新
-      const [ updateCount, [ updateRow ]] = await this.ProductModel.update(product, {
-        where: { id: product.id },
-        individualHooks: true,
-      });
-      addOrUpdate = '更新';
-      if (updateCount < 1) return this.ServerResponse.createByErrorMsg('更新产品失败');
-      productRow = updateRow;
+        const [ updateCount, [ updateRow ]] = await this.ProductModel.update(product, {
+          where: { id: product.id },
+          individualHooks: true,
+        });
+        addOrUpdate = '更新';
+        if (updateCount < 1) return this.ServerResponse.createByErrorMsg('更新产品失败');
+        productRow = updateRow;
+      }
+      return this.ServerResponse.createBySuccessMsgAndData(`${addOrUpdate}产品成功`, productRow.toJSON());
+    } catch (error) {
+      return this.ServerResponse.createByErrorMsg('添加/更新产品失败');
     }
-    return this.ServerResponse.createBySuccessMsgAndData(`${addOrUpdate}产品成功`, productRow.toJSON());
   }
 
   /**

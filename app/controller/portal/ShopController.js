@@ -22,8 +22,7 @@ class ShopController extends Controller {
 
   // 查询店铺信息
   async queryShopInfo() {
-    const { shopId } = this.ctx.params;
-    const response = await this.shopService.queryShopInfo(shopId);
+    const response = await this.shopService.queryShopInfo(this.ctx.query);
     this.ctx.body = response;
   }
 }

@@ -3,6 +3,7 @@
 const Service = require('egg').Service;
 const _ = require('lodash');
 const { SHOPNAME } = require('../common/type');
+const { ON_SALE } = require('../common/product');
 
 
 class ShopService extends Service {
@@ -10,6 +11,7 @@ class ShopService extends Service {
     super(ctx);
     this.session = ctx.session;
     this.ShopModel = ctx.model.ShopModel;
+    this.ProductModel = ctx.model.ProductModel;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
   }
@@ -60,7 +62,6 @@ class ShopService extends Service {
       if (!shop) return this.ServerResponse.createByErrorMsg('注册失败1');
       return this.ServerResponse.createBySuccessMsgAndData('注册成功', shop);
     } catch (e) {
-      console.log(e);
       return this.ServerResponse.createByErrorMsg('注册失败2');
     }
   }
@@ -89,25 +90,39 @@ class ShopService extends Service {
     return this.ServerResponse.createByError('更新店铺信息失败');
   }
 
+  // 根据商品分类id商品分组
+  groupProducts(list){
+    var categoryObj = {};
+    list.forEach(product=>categoryObj[product.categoryName]?  categoryObj[product.categoryName].push(product) :categoryObj[product.categoryName]=[product]);
+    return categoryObj;
+  }
+
   /**
-   * 获取店铺信息
+   * 获取店铺信息 包含在售商品
    * @param {String} shopId
    * @return {Promise.<void>}
    */
-  async queryShopInfo(shopId) {
+  async queryShopInfo({shopId,status=ON_SALE.CODE}) {
     const shop = await this.ShopModel.findOne({
       // attributes: [ 'id', 'username', 'email', 'phone', 'question' ],
-      where: shopId,
+      where: {id:shopId},
     });
     if (!shop) return this.ServerResponse.createByErrorMsg('找不到当前店铺');
-    return this.ServerResponse.createBySuccessData(shop.toJSON());
+
+    const products = await this.ProductModel.findAll({ where:  {shopId}   });
+
+    if (!products) return this.ServerResponse.createByErrorMsg('查询商品出错');
+    return this.ServerResponse.createBySuccessData({
+      shopInfo:shop,
+      items:this.groupProducts(products)
+    });
   }
 
   /**
    *
    * @param {经纬度查询附近店铺列表} param0
    */
-  async getShopListNearBy({ latitude, longitude, pageNum = 1, pageSize = 10, range = 50000 }) {
+  async getShopListNearBy({ latitude, longitude, pageNum = 1, pageSize = 10, range = 5 }) {
     // 距离+排序+多少公里范围的条件检索
     // 默认检索检索出5公里范围
     const queryString = `select * from (select id,address,image_path,promotion_info,phone, startTime, endTime, ROUND(6378.138*2*ASIN(SQRT(POW(SIN((${latitude}*PI()/180-latitude*PI()/180)/2),2)+COS(${latitude}*PI()/180)*COS(latitude*PI()/180)*POW(SIN((${longitude}*PI()/180-longitude*PI()/180)/2),2)))*1000) AS distance from shops order by distance ) as a where a.distance<=${range * 1000} LIMIT ${pageNum},${pageSize}`;
