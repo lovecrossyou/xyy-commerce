@@ -113,34 +113,38 @@ module.exports = app => {
       if (!order) return this.ServerResponse.createByErrorMsg('用户没有该订单');
       if (order.status >= OrderStatus.PAID.CODE) return this.ServerResponse.createByErrorMsg('该订单不可支付');
 
-      let result,
-        prepay_id,
-        // eslint-disable-next-line prefer-const
-        trade_type = 'APP';
-      if (trade_type !== 'APP') {
-        result = await wxpayService.getPayParams({
-          out_trade_no: order.orderNum.toString(),
-          body: `订单${order.orderNum}购买商品共${order.payment}元`,
-          total_fee: Math.round(Number(order.payment) * 100, 0),
-          openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE',
+      try {
+        let result,
+          prepay_id,
+          // eslint-disable-next-line prefer-const
+          trade_type = 'APP';
+        if (trade_type !== 'APP') {
+          result = await wxpayService.getPayParams({
+            out_trade_no: order.orderNum.toString(),
+            body: `订单${order.orderNum}购买商品共${order.payment}元`,
+            total_fee: Math.round(Number(order.payment) * 100, 0),
+            openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE',
+          });
+          const result_package = result.package;
+          prepay_id = result_package.split('=')[1];
+          result = await wxpayService.getPayParamsByPrepay({ prepay_id });
+        } else {
+          result = await wxpayService.unifiedOrder({
+            out_trade_no: order.orderNum.toString(),
+            body: `订单${order.orderNum}购买商品共${order.payment}元`,
+            total_fee: Math.round(Number(order.payment) * 100, 0),
+            trade_type, // APP
+          });
+          prepay_id = result.prepay_id;
+          result = await wxpayService.getAppParamsByPrepay({ prepay_id });
+        }
+        return new Promise(resolve => {
+          const resData = this.ServerResponse.createBySuccessMsgAndData('生成微信支付信息成功', result);
+          resolve(resData);
         });
-        const result_package = result.package;
-        prepay_id = result_package.split('=')[1];
-        result = await wxpayService.getPayParamsByPrepay({ prepay_id });
-      } else {
-        result = await wxpayService.unifiedOrder({
-          out_trade_no: order.orderNum.toString(),
-          body: `订单${order.orderNum}购买商品共${order.payment}元`,
-          total_fee: Math.round(Number(order.payment) * 100, 0),
-          trade_type, // APP
-        });
-        prepay_id = result.prepay_id;
-        result = await wxpayService.getAppParamsByPrepay({ prepay_id });
+      } catch (error) {
+        return this.ServerResponse.createByErrorMsg('创建支付订单错误');
       }
-      return new Promise(resolve => {
-        const resData = this.ServerResponse.createBySuccessMsgAndData('生成微信支付信息成功', result);
-        resolve(resData);
-      });
     }
 
 
