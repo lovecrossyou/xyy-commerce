@@ -20,8 +20,8 @@ module.exports = app => class ShippingService extends Service {
    */
   async add(shipping) {
     // 可以用schema 验证数据完整性, 验证手机
-    console.log(isMobilePhone(shipping.receiverMobile, 'zh-CN'))
-    if (!Object.keys(shipping).every(k => !!shipping[k])) return this.ServerResponse.createByErrorCodeMsg(this.ResponseCode.ILLEGAL_ARGUMENT, 'ILLEGAL_ARGUMENT')
+    // console.log(isMobilePhone(shipping.receiverMobile, 'zh-CN'))
+    // if (!Object.keys(shipping).every(k => !!shipping[k])) return this.ServerResponse.createByErrorCodeMsg(this.ResponseCode.ILLEGAL_ARGUMENT, 'ILLEGAL_ARGUMENT')
     const { id: userId } = this.session.currentUser
     shipping = { ...shipping, userId }
     const shippingRow = await this.ShippingModel.create(shipping)

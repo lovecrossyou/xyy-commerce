@@ -5,7 +5,9 @@ const uuidv1 = require('uuid/v1');
 const { salt } = require('../common/property');
 const { USERNAME, EMAIL } = require('../common/type');
 const { ROLE_ADMAIN, ROLE_CUSTOMER } = require('../common/role');
-
+const WechatPay = require('../lib/wechatPay')
+const wxpayConfig = require('../common/wxpayConfig');
+const wxUtil = new WechatPay(wxpayConfig);
 const TOKEN = 'token_';
 
 class UserService extends Service {
@@ -55,7 +57,7 @@ class UserService extends Service {
   // 微信授权登录
   // 微信小程序登录(包括注册)
 
-  async login(username, password) {
+  async login(username, password, code) {
     // 用户名存在报错
     const validResponse = await this.checkValid(USERNAME, username);
     if (validResponse.isSuccess()) return validResponse;
@@ -70,10 +72,24 @@ class UserService extends Service {
     });
 
     if (!user) return this.ServerResponse.createByErrorMsg('密码错误');
-    const userInfo = user.toJSON();
+    let userInfo = user.toJSON();
     let redirectTo;
     if (userInfo.role === ROLE_ADMAIN) redirectTo = '/';
     else redirectTo = '';
+
+    // 小程序授权登录，写入openid
+    if(code){
+      const result = await wxUtil.getAccessToken(code);
+      console.log('result ',result)
+      if(result.openid){
+        // 更新用户信息
+        userInfo.openid = result.openid;
+        this.updateUserInfo(userInfo,userInfo);
+      }
+      else{
+        // return this.ServerResponse.createByErrorMsg('注册失败');
+      }
+    }
 
     return this.ServerResponse.createBySuccessMsgAndData('登录成功', { ...userInfo, redirectTo });
   }
@@ -91,6 +107,9 @@ class UserService extends Service {
     const validEmailResponse = await this.checkValid(EMAIL, user.email);
     if (!validEmailResponse.isSuccess()) return validEmailResponse;
 
+    // 微信授权登录，获取openid
+    const code = user.code;
+    
     try {
       user.role = ROLE_CUSTOMER;
       user.password = md5(user.password + salt);
@@ -101,6 +120,18 @@ class UserService extends Service {
 
       user = user.toJSON();
       _.unset(user, 'password');
+
+      if(code){
+        const result = await wxUtil.getAccessToken(user.code);
+        console.log('result ',result)
+        if(result.openid){
+          user.openid = result.openid;
+          this.updateUserInfo(user,user);
+        }
+        else{
+          return this.ServerResponse.createByErrorMsg('注册失败');
+        }
+      }
 
       return this.ServerResponse.createBySuccessMsgAndData('注册成功', user);
     } catch (e) {

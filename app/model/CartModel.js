@@ -1,7 +1,7 @@
 const { UN_CHECKED } = require('../common/cart');
 
 module.exports = app => {
-  const { INTEGER, DATE, UUID, UUIDV4 } = app.Sequelize;
+  const { INTEGER, DATE, UUID, UUIDV4, STRING } = app.Sequelize;
 
   const CartModel = app.model.define('cart', {
     id: {
@@ -13,12 +13,12 @@ module.exports = app => {
     },
     // 用户id
     userId: {
-      type: UUID,
+      type: STRING(50),
       allowNull: false,
     },
     // 产品id
     productId: {
-      type: UUID,
+      type: STRING(50),
       allowNull: true,
     },
     // 数量

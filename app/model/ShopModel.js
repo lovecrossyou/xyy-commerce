@@ -59,12 +59,12 @@ module.exports = app => {
     },
     // 营业执照
     business_license_image: {
-      type: STRING(20),
+      type: STRING(50),
       allowNull: false,
     },
     // 餐饮服务许可证
     catering_service_license_image: {
-      type: STRING(20),
+      type: STRING(50),
       allowNull: false,
     },
     float_delivery_fee: {

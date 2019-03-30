@@ -16,6 +16,11 @@ module.exports = app => {
       allowNull: false,
       unique: true,
     },
+    // 微信平台
+    openid: {
+      type: STRING(50),
+      allowNull: true,
+    },
     password: {
       type: STRING(50),
       allowNull: false,

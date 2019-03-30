@@ -22,7 +22,7 @@ module.exports = app => class CartService extends Service {
    * @param cout {Number} 总数
    * @return {Promise.<void>}
    */
-  async addOrUpdate({ productId, count }) {
+  async addOrUpdate({ productId, count = 1 }) {
     if (!productId || !count) return this.ServerResponse.createByErrorMsg(this.ResponseCode.ILLEGAL_ARGUMENT, 'ILLEGAL_ARGUMENT');
     const { id: userId } = this.session.currentUser;
     count = Number(count);

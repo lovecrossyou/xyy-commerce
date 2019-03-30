@@ -107,23 +107,20 @@ module.exports = app => {
      *
      * @param {微信支付} orderNum
      */
-    async wxpay(orderNum) {
-      const { id: userId } = this.session.currentUser;
+    async wxpay(orderNum, trade_type = "") {
+      const { id: userId, openid } = this.session.currentUser;
       const order = await this.OrderModel.findOne({ where: { userId, orderNum } }).then(row => row && row.toJSON());
       if (!order) return this.ServerResponse.createByErrorMsg('用户没有该订单');
       if (order.status >= OrderStatus.PAID.CODE) return this.ServerResponse.createByErrorMsg('该订单不可支付');
 
       try {
-        let result,
-          prepay_id,
-          // eslint-disable-next-line prefer-const
-          trade_type = 'APP';
+        let result,prepay_id;
         if (trade_type !== 'APP') {
           result = await wxpayService.getPayParams({
             out_trade_no: order.orderNum.toString(),
             body: `订单${order.orderNum}购买商品共${order.payment}元`,
             total_fee: Math.round(Number(order.payment) * 100, 0),
-            openid: 'ou3ry5IxNxJwMIYsrBG96S4zbUuE',
+            openid: openid,
           });
           const result_package = result.package;
           prepay_id = result_package.split('=')[1];
@@ -351,7 +348,7 @@ module.exports = app => {
       // 循环查询解决
       const { count, rows } = await this.OrderModel.findAndCount({
         where: { userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId },
-        order: [[ 'id', 'DESC' ]],
+        order: [['id', 'DESC']],
         // eslint-disable-next-line no-bitwise
         limit: Number(pageSize | 0),
         offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
@@ -400,7 +397,7 @@ module.exports = app => {
     async search({ orderNum, pageNum = 1, pageSize = 10 }) {
       const { count, rows } = await this.OrderModel.findAndCount({
         where: { orderNum },
-        order: [[ 'id', 'DESC' ]],
+        order: [['id', 'DESC']],
         limit: Number(pageSize | 0),
         offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
       });
@@ -437,7 +434,7 @@ module.exports = app => {
             return arr;
           }
         }
-        return [ ...arr, item ];
+        return [...arr, item];
       }, []);
     }
 

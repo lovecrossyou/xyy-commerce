@@ -125,13 +125,16 @@ class ShopService extends Service {
   async getShopListNearBy({ latitude, longitude, pageNum = 1, pageSize = 10, range = 5 }) {
     // 距离+排序+多少公里范围的条件检索
     // 默认检索检索出5公里范围
-    const queryString = `select * from (select id,address,image_path,promotion_info,phone, startTime, endTime, ROUND(6378.138*2*ASIN(SQRT(POW(SIN((${latitude}*PI()/180-latitude*PI()/180)/2),2)+COS(${latitude}*PI()/180)*COS(latitude*PI()/180)*POW(SIN((${longitude}*PI()/180-longitude*PI()/180)/2),2)))*1000) AS distance from shops order by distance ) as a where a.distance<=${range * 1000} LIMIT ${pageNum},${pageSize}`;
+    const lat2 = latitude;
+    const lng2 = longitude;
+    const queryString = `select * from (select id,name,image_path,address,category,promotion_info,phone, round(6378.138*2*asin(sqrt(pow(sin((latitude*pi()/180-${lat2}*pi()/180)/2),2)+cos(latitude*pi()/180)*cos(${lat2}*pi()/180)* pow(sin((longitude*pi()/180-${lng2}*pi()/180)/2),2)))*1000) as distance from shops order by distance ) as a where a.distance<=${range*1000} LIMIT ${pageNum-1},${pageSize}`;
     const [ results ] = await this.app.model.query(queryString);
     const shopList = results.map(row => {
       return {
         ...row,
       };
     });
+    // const shopList = await this.ShopModel.findAll();
     return this.ServerResponse.createBySuccessMsgAndData('查询附近店铺成功', shopList);
   }
 }

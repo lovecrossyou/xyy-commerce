@@ -17,5 +17,13 @@ select * from (select address,category,promotion_info,phone, ROUND(6378.138*2*AS
 ```
 
 ```
-select * from (select address,category,promotion_info,phone, ROUND(6378.138*2*ASIN(SQRT(POW(SIN((30.664385188806*PI()/180-lat*PI()/180)/2),2)+COS(30.664385188806*PI()/180)*COS(lat*PI()/180)*POW(SIN((104.07559730274*PI()/180-lng*PI()/180)/2),2)))*1000) AS distance from merchants order by distance ) as a where a.distance<=5000000 LIMIT ${pageNum},${pageSize} 
+select * from (select address,category,promotion_info,phone, round(6378.138*2*asin(sqrt(pow(sin((latitude*pi()/180-lat2*pi()/180)/2),2)+cos(latitude*pi()/180)*cos(lat2*pi()/180)* pow(sin((longitude*pi()/180-lng2*pi()/180)/2),2)))*1000) as distance from egg_commerce.shops order by distance ) as a where a.distance<=5000000 ;
+```
+```
+select * from (select address,category,promotion_info,phone, round(6378.138*2*asin(sqrt(pow(sin((latitude*pi()/180-39.92843*pi()/180)/2),2)+cos(latitude*pi()/180)*cos(39.92843*pi()/180)* pow(sin((longitude*pi()/180-116.35073*pi()/180)/2),2)))*1000) as distance from egg_commerce.shops order by distance ) as a where a.distance<=5000000 ;
+```
+
+```
+select * from (select address,category,promotion_info,phone, round(6378.138*2*asin(sqrt(pow(sin((latitude*pi()/180-39.92843*pi()/180)/2),2)+cos(latitude*pi()/180)*cos(39.92843*pi()/180)* pow(sin((longitude*pi()/180-116.35073*pi()/180)/2),2)))*1000) as distance from egg_commerce.shops order by distance ) as a where a.distance<=5000 LIMIT 0, 1000
+
 ```
