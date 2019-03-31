@@ -15,7 +15,7 @@ class SMSService extends Service {
    * 生成验证码
    * @param {*} phoneNum
    */
-  async create(phoneNum) {
+  async createSMS(phoneNum) {
     const code = '666666';
     const sms = {
       phoneNum,
