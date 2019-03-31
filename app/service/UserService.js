@@ -54,9 +54,12 @@ class UserService extends Service {
     return this.ServerResponse.createByErrorMsg('参数错误');
   }
 
-  // 微信授权登录
-  // 微信小程序登录(包括注册)
-
+  /**
+   * 手机号、验证码登录,小程序需要传code以获取用户openid
+   * @param {} username 
+   * @param {*} password 
+   * @param {*} code 
+   */
   async login(username, password, code) {
     // 用户名存在报错
     const validResponse = await this.checkValid(USERNAME, username);
