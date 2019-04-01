@@ -101,10 +101,7 @@ class UserService extends Service {
     if (smsRow.code !== password) return this.ServerResponse.createByErrorMsg('验证码错误');
     // 检测用户名存在
     let userRow = await this.checkExistUser(username);
-    if (userRow) {
-      // 用户已经存在 验证码设置过期 并 返回用户信息
-      this.updateSmsStatus(smsRow);
-    } else {
+    if (!userRow) {
       // 注册新用户 并 返回用户信息
       const user = {
         username,
@@ -113,8 +110,10 @@ class UserService extends Service {
       userRow = await this.UserModel.create(user, {
         attributes: { exclude: [ 'password', 'role', 'answer' ] },
       });
+      if (!userRow) return this.ServerResponse.createByErrorMsg('注册新用户失败');
     }
-
+    // 验证码设置过期
+    this.updateSmsStatus(smsRow);
     const userInfo = userRow.toJSON();
     let redirectTo;
     if (userInfo.role === ROLE_ADMAIN) redirectTo = '/';
