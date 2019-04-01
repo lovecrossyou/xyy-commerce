@@ -25,6 +25,10 @@ module.exports = app => {
       type: STRING(50),
       allowNull: true,
     },
+    shopName: {
+      type: STRING(50),
+      allowNull: true,
+    },
     // 商品名称
     name: {
       type: STRING(50),

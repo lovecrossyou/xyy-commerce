@@ -21,6 +21,16 @@ module.exports = app => {
       type: STRING(50),
       allowNull: true,
     },
+    // 店铺id
+    shopId: {
+      type: STRING(50),
+      allowNull: true,
+    },
+    // 店铺名称
+    shopName: {
+      type: STRING(50),
+      allowNull: true,
+    },
     // 数量
     quantity: {
       type: INTEGER(11),

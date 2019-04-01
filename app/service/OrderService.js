@@ -107,20 +107,21 @@ module.exports = app => {
      *
      * @param {微信支付} orderNum
      */
-    async wxpay(orderNum, trade_type = "") {
+    async wxpay(orderNum, trade_type = '') {
       const { id: userId, openid } = this.session.currentUser;
       const order = await this.OrderModel.findOne({ where: { userId, orderNum } }).then(row => row && row.toJSON());
       if (!order) return this.ServerResponse.createByErrorMsg('用户没有该订单');
       if (order.status >= OrderStatus.PAID.CODE) return this.ServerResponse.createByErrorMsg('该订单不可支付');
 
       try {
-        let result,prepay_id;
+        let result = null;
+        let prepay_id = 0;
         if (trade_type !== 'APP') {
           result = await wxpayService.getPayParams({
             out_trade_no: order.orderNum.toString(),
             body: `订单${order.orderNum}购买商品共${order.payment}元`,
             total_fee: Math.round(Number(order.payment) * 100, 0),
-            openid: openid,
+            openid,
           });
           const result_package = result.package;
           prepay_id = result_package.split('=')[1];
@@ -249,6 +250,38 @@ module.exports = app => {
       return this.ServerResponse.createBySuccessMsgAndData('订单状态', OrderStatus[key]);
     }
 
+    /**
+     * 创建 基于店铺的订单
+     * @param {*} shopId
+     * @param {*} shippingId
+     */
+    async createShopOrder(shopId, shippingId) {
+      const { id: userId } = this.session.currentUser;
+      const shipping = await this.ShippingModel.findOne({ where: { id: shippingId, userId } }).then(r => r && r.toJSON());
+      if (!shipping) return this.ServerResponse.createByErrorMsg('用户无该收货地址');
+      // 店铺购物车中获取数据
+      const response = await this._getShopCartListWithProduct(shopId, userId);
+      if (!response.isSuccess()) return response;
+      const cartListWithProduct = response.getData();
+
+      const orderNum = this._createAOrderNum();
+      const orderItemArr = await this._cartListToOrderItemArr(cartListWithProduct);
+      const orderTotalPrice = orderItemArr.reduce((total, item) => total + item.totalPrice, 0);
+      const order = await this._createPayOrder(userId, shippingId, orderTotalPrice, orderNum);
+      if (!order) return this.ServerResponse.createByErrorMsg('创建订单错误');
+      // 批量插入orderItem
+      const orderItemList = await this._bulkCreateOrderItemArr(orderItemArr, orderNum);
+      // 更新库存
+      await this._reduceUpdateProductStock(orderItemList);
+      // 清空购物车[]
+      await this._cleanCart(cartListWithProduct);
+
+      // 组装及处理返回数据， 返回订单详情，收货地址，订单的各产品
+      const orderDetail = await this._createOrderDetail(order, orderItemList, shippingId);
+      return this.ServerResponse.createBySuccessMsgAndData('创建订单成功', orderDetail);
+
+    }
+
     async createOrder(shippingId) {
       const { id: userId } = this.session.currentUser;
       const shipping = await this.ShippingModel.findOne({ where: { id: shippingId, userId } }).then(r => r && r.toJSON());
@@ -348,7 +381,7 @@ module.exports = app => {
       // 循环查询解决
       const { count, rows } = await this.OrderModel.findAndCount({
         where: { userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId },
-        order: [['id', 'DESC']],
+        order: [[ 'id', 'DESC' ]],
         // eslint-disable-next-line no-bitwise
         limit: Number(pageSize | 0),
         offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
@@ -363,21 +396,6 @@ module.exports = app => {
         return { ...item, orderItemList, shipping };
       }));
       const list = this._createOrderDetailList(orderListWithOrderItemsAndShipping);
-      // 关联查询解决 bug
-      // const orderListWithOrderItemsAndShipping = await this.OrderModel.findAll({
-      //     where: { userId: role === ROLE_ADMAIN ? { $regexp: '[0-9a-zA-Z]' } : userId },
-      //     order: [[ 'id', 'DESC' ]],
-      //     limit: Number(pageSize | 0),
-      //     offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
-      //     include: [
-      //       { model: this.OrderItemModel },
-      //       { model: this.ShippingModel, where: { id: app.Sequelize.literal('order.shippingId = shipping.id') } }
-      //     ],
-      //   }).then(rows => rows && rows.map(r => r.toJSON()))
-      //
-      // const groupList = this._groupList(orderListWithOrderItemsAndShipping)
-      // const list = this._createOrderDetailList(groupList)
-
       return this.ServerResponse.createBySuccessData({
         list,
         pageNum,
@@ -397,7 +415,7 @@ module.exports = app => {
     async search({ orderNum, pageNum = 1, pageSize = 10 }) {
       const { count, rows } = await this.OrderModel.findAndCount({
         where: { orderNum },
-        order: [['id', 'DESC']],
+        order: [[ 'id', 'DESC' ]],
         limit: Number(pageSize | 0),
         offset: Number(pageNum - 1 | 0) * Number(pageSize | 0),
       });
@@ -434,7 +452,7 @@ module.exports = app => {
             return arr;
           }
         }
-        return [...arr, item];
+        return [ ...arr, item ];
       }, []);
     }
 
@@ -472,6 +490,22 @@ module.exports = app => {
 
     _getEnumValueByCode(mapper, code) {
       return mapper[_.findKey(mapper, item => item.CODE === code)].VALUE;
+    }
+
+    /**
+     * 获取店铺购物车商品
+     * @param {*} shopId
+     * @param {*} userId
+     */
+    async _getShopCartListWithProduct(shopId, userId) {
+      const arr = await this.CartModel.findAll({
+        where: { userId, shopId, checked: CHECKED },
+        include: [{ model: this.ProductModel, where: { id: app.Sequelize.col('productId'), status: ON_SALE.CODE } }],
+      }).then(rows => rows && rows.map(r => r.toJSON()));
+
+      if (arr.length === 0) return this.ServerResponse.createByErrorMsg('购物车为空');
+      if (!this._checkStock(arr).hasStock) return this.ServerResponse.createByErrorMsg(`${this._checkStock(arr).noStockList[0]}商品库存不足`);
+      return this.ServerResponse.createBySuccessData(arr);
     }
 
     async _getCartListWithProduct(userId) {
@@ -543,7 +577,6 @@ module.exports = app => {
         currentUnitPrice: item.product.price,
         totalPrice: item.product.price * item.quantity,
       }));
-      // return await this.OrderItemModel.bulkCreate(orderItemArr).then(rows => rows && rows.map(r => r.toJSON()))
     }
 
     // 生成支付信息

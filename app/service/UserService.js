@@ -91,7 +91,6 @@ class UserService extends Service {
   async login(username, password, code) {
     // 检查短信验证码是否正确
     const smsRow = await this.SMSModel.findOne({
-      // attributes: [ 'id', 'phoneNum', 'status' ],
       where: {
         phoneNum: username,
         status: 0, // 验证码没有被使用过
@@ -102,7 +101,7 @@ class UserService extends Service {
     // 检测用户名存在
     let userRow = await this.checkExistUser(username);
     if (!userRow) {
-      // 注册新用户 并 返回用户信息
+      // 注册新用户
       const user = {
         username,
         password,
@@ -122,7 +121,6 @@ class UserService extends Service {
     // 小程序授权登录，写入openid
     if (code) {
       const result = await wxUtil.getAccessToken(code);
-      console.log('result ', result);
       if (result.openid) {
         // 更新用户信息
         userInfo.openid = result.openid;

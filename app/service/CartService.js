@@ -36,6 +36,8 @@ module.exports = app => class CartService extends Service {
       await this.CartModel.create({
         userId,
         productId,
+        shopId: productRow.shopId,
+        shopName: productRow.shopName,
         quantity: count < 0 ? 0 : count,
         checked: CHECKED,
       });
@@ -76,16 +78,42 @@ module.exports = app => class CartService extends Service {
       where: { userId },
       include: [{ model: this.ProductModel, where: { id: app.Sequelize.col('productId') } }],
     }).map(rows => rows && rows.toJSON());
-    const totalPrice = cartArr.reduce((prePrice, curItem) => {
-      return curItem.checked ? Number(Number(prePrice) + Number(curItem.quantity) * Number(curItem.product.price)).toFixed(2) : 0;
+
+    const groupedCarts = _(cartArr)
+      .groupBy(item => item.shopId)
+      .map((carts, shopId) => {
+        return {
+          shopId,
+          carts,
+        };
+      })
+      .reverse() // 为了反转数组排序
+      .value();
+
+    const cartsInfo = [];
+    groupedCarts.forEach(shopCart => {
+      const carts = shopCart.carts;
+      const totalPrice = carts.reduce((prePrice, curItem) => {
+        return curItem.checked ? Number(Number(prePrice) + Number(curItem.quantity) * Number(curItem.product.price)).toFixed(2) : 0;
+      }, 0);
+      const checked = carts.every(item => item.checked === CHECKED);
+      cartsInfo.push({
+        totalPrice,
+        carts: shopCart.carts,
+        checked,
+      });
+    });
+
+    const totalPrice = cartsInfo.reduce((prePrice, cart) => {
+      return prePrice + cart.totalPrice;
     }, 0);
-    const allChecked = cartArr.every(item => item.checked === CHECKED);
+
+    const allChecked = cartsInfo.every(item => item.checked === CHECKED);
     if (isNaN(totalPrice)) return this.ServerResponse.createByErrorMsg('价格或数量错误');
     return this.ServerResponse.createBySuccessMsgAndData(msg, {
       totalPrice,
       allChecked,
-      list: cartArr,
-      // host: this.config.oss.client.endpoint,
+      list: cartsInfo,
     });
   }
 
