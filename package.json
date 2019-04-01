@@ -38,7 +38,7 @@
     "node": ">=8.9.0"
   },
   "scripts": {
-    "start": "EGG_SERVER_ENV=prod ENABLE_NODE_LOG=YES egg-scripts start --daemon --title=xyy-commerce -p 8004",
+    "start": "EGG_SERVER_ENV=prod ENABLE_NODE_LOG=YES egg-sequelize db:migrate && egg-scripts start --daemon --title=xyy-commerce -p 8004",
     "stop": "egg-scripts stop --title=xyy-commerce",
     "dev": "egg-bin dev --port 8004",
     "package":"tar -zcvf ../release.tgz .",

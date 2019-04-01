@@ -15,14 +15,16 @@ class SMSService extends Service {
    * 生成验证码
    * @param {*} phoneNum
    */
-  async createSMS(phoneNum) {
+  async create(phoneNum) {
     const code = '666666';
     const sms = {
       phoneNum,
       code,
     };
-    const res = this.SMSModel.create(sms);
-    if (!res) return this.ServerResponse.createByErrorMsg('生成验证码失败');
+    const smsRow = await this.SMSModel.create(sms);
+    if (!smsRow) return this.ServerResponse.createByErrorMsg('生成验证码失败');
+    return this.ServerResponse.createBySuccessMsgAndData('生成验证码成功', smsRow);
+
   }
 }
 
