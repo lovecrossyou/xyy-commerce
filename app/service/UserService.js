@@ -5,7 +5,7 @@ const uuidv1 = require('uuid/v1');
 const { salt } = require('../common/property');
 const { USERNAME, EMAIL } = require('../common/type');
 const { ROLE_ADMAIN, ROLE_CUSTOMER } = require('../common/role');
-const WechatPay = require('../lib/wechatPay')
+const WechatPay = require('../lib/wechatPay');
 const wxpayConfig = require('../common/wxpayConfig');
 const wxUtil = new WechatPay(wxpayConfig);
 const TOKEN = 'token_';
@@ -15,6 +15,7 @@ class UserService extends Service {
     super(ctx);
     this.session = ctx.session;
     this.UserModel = ctx.model.UserModel;
+    this.SMSModel = ctx.model.SMSModel;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
   }
@@ -55,45 +56,80 @@ class UserService extends Service {
   }
 
   /**
-   * 手机号、验证码登录,小程序需要传code以获取用户openid
-   * @param {} username 
-   * @param {*} password 
-   * @param {*} code 
+   * 查询用户是否存在
+   * @param {} phoneNum
    */
-  async login(username, password, code) {
-    // 用户名存在报错
-    const validResponse = await this.checkValid(USERNAME, username);
-    if (validResponse.isSuccess()) return validResponse;
-
-    // 检查密码是否正确
-    const user = await this.UserModel.findOne({
-      attributes: [ 'id', 'username', 'email', 'phone', 'role' ],
+  async checkExistUser(phoneNum) {
+    return await this.UserModel.findOne({
       where: {
-        username,
-        password: md5(password + salt),
+        username: phoneNum,
       },
     });
+    // return await this._checkExistColByField(USERNAME, phoneNum);
+  }
 
-    if (!user) return this.ServerResponse.createByErrorMsg('密码错误');
-    let userInfo = user.toJSON();
+  /**
+   * 更新验证码状态 设置为已经使用过
+   * @param {*} sms
+   */
+  async updateSmsStatus(sms) {
+    const [ updateCount, [ updateRow ]] = await this.SMSModel.update({
+      status: 1,
+    }, {
+      where: { id: sms.id },
+      individualHooks: true,
+    });
+    if (updateCount <= 0) return this.ServerResponse.createByError('更新验证码信息失败', updateRow);
+  }
+
+  /**
+   * 手机号、验证码登录,小程序需要传code以获取用户openid
+   * @param {} username
+   * @param {*} password = smsCode
+   * @param {*} code
+   */
+  async login(username, password, code) {
+    // 检查短信验证码是否正确
+    const smsRow = await this.SMSModel.findOne({
+      // attributes: [ 'id', 'phoneNum', 'status' ],
+      where: {
+        phoneNum: username,
+        status: 0, // 验证码没有被使用过
+      },
+    });
+    if (!smsRow) return this.ServerResponse.createByErrorMsg('验证码错误或已过期');
+    if (smsRow.code !== password) return this.ServerResponse.createByErrorMsg('验证码错误');
+    // 检测用户名存在
+    let userRow = await this.checkExistUser(username);
+    if (userRow) {
+      // 用户已经存在 验证码设置过期 并 返回用户信息
+      this.updateSmsStatus(smsRow);
+    } else {
+      // 注册新用户 并 返回用户信息
+      const user = {
+        username,
+        password,
+      };
+      userRow = await this.UserModel.create(user, {
+        attributes: { exclude: [ 'password', 'role', 'answer' ] },
+      });
+    }
+
+    const userInfo = userRow.toJSON();
     let redirectTo;
     if (userInfo.role === ROLE_ADMAIN) redirectTo = '/';
     else redirectTo = '';
 
     // 小程序授权登录，写入openid
-    if(code){
+    if (code) {
       const result = await wxUtil.getAccessToken(code);
-      console.log('result ',result)
-      if(result.openid){
+      console.log('result ', result);
+      if (result.openid) {
         // 更新用户信息
         userInfo.openid = result.openid;
-        this.updateUserInfo(userInfo,userInfo);
-      }
-      else{
-        // return this.ServerResponse.createByErrorMsg('注册失败');
+        this.updateUserInfo(userInfo, userInfo);
       }
     }
-
     return this.ServerResponse.createBySuccessMsgAndData('登录成功', { ...userInfo, redirectTo });
   }
 
@@ -112,7 +148,7 @@ class UserService extends Service {
 
     // 微信授权登录，获取openid
     const code = user.code;
-    
+
     try {
       user.role = ROLE_CUSTOMER;
       user.password = md5(user.password + salt);
@@ -124,14 +160,13 @@ class UserService extends Service {
       user = user.toJSON();
       _.unset(user, 'password');
 
-      if(code){
+      if (code) {
         const result = await wxUtil.getAccessToken(user.code);
-        console.log('result ',result)
-        if(result.openid){
+        console.log('result ', result);
+        if (result.openid) {
           user.openid = result.openid;
-          this.updateUserInfo(user,user);
-        }
-        else{
+          this.updateUserInfo(user, user);
+        } else {
           return this.ServerResponse.createByErrorMsg('注册失败');
         }
       }
