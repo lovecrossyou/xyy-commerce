@@ -11,6 +11,8 @@ module.exports = app => {
   app.router.post('/order/mobilePay', checkLogin, app.controller.portal.orderController.mobilePay);
 
   app.router.post('/order/create', checkLogin, app.controller.portal.orderController.create);
+  app.router.post('/order/createShop', checkLogin, app.controller.portal.orderController.createShop);
+
 
   app.router.put('/order/cancel', checkLogin, app.controller.portal.orderController.cancel);
 
