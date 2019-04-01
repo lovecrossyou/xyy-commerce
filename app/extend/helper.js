@@ -21,3 +21,10 @@ exports.getDistance = (lat1, lng1, lat2, lng2) => {
   return s;
 };
 
+// 生成四位随机数字
+const rand = (min, max) => {
+  return Math.floor(Math.random() * (max - min)) + min;
+};
+
+exports.rand4 = () => rand(1000, 9999);
+

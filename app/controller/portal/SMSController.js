@@ -12,9 +12,9 @@ class SMSController extends Controller {
     this.ServerResponse = ctx.response.ServerResponse;
   }
 
-  async create() {
+  async send() {
     const { username } = this.ctx.request.body;
-    const response = await this.SMSService.create(username);
+    const response = await this.SMSService.send(username);
     this.ctx.body = response;
   }
 }
