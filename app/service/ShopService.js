@@ -90,31 +90,38 @@ class ShopService extends Service {
     return this.ServerResponse.createByError('更新店铺信息失败');
   }
 
-  // 根据商品分类id商品分组
-  groupProducts(list){
-    var categoryObj = {};
-    list.forEach(product=>categoryObj[product.categoryName]?  categoryObj[product.categoryName].push(product) :categoryObj[product.categoryName]=[product]);
-    return categoryObj;
-  }
-
   /**
    * 获取店铺信息 包含在售商品
    * @param {String} shopId
    * @return {Promise.<void>}
    */
-  async queryShopInfo({shopId,status=ON_SALE.CODE}) {
+  async queryShopInfo({ shopId, status = ON_SALE.CODE }) {
     const shop = await this.ShopModel.findOne({
       // attributes: [ 'id', 'username', 'email', 'phone', 'question' ],
-      where: {id:shopId},
+      where: { id: shopId },
     });
     if (!shop) return this.ServerResponse.createByErrorMsg('找不到当前店铺');
 
-    const products = await this.ProductModel.findAll({ where:  {shopId}   });
+    const products = await this.ProductModel.findAll({ where: { shopId, status } });
+
+    const groupedProducts = _(products)
+      .groupBy(item => { return JSON.stringify({ categoryName: item.categoryName, categoryId: item.id }); })
+      .map((items, categoryString) => {
+        const categoryInfo = JSON.parse(categoryString);
+        return {
+          categoryName: categoryInfo.categoryName,
+          categoryId: categoryInfo.categoryId,
+          items,
+        };
+      })
+      .reverse() // 为了反转数组排序
+      .value();
+
 
     if (!products) return this.ServerResponse.createByErrorMsg('查询商品出错');
     return this.ServerResponse.createBySuccessData({
-      shopInfo:shop,
-      items:this.groupProducts(products)
+      shopInfo: shop,
+      list: groupedProducts,
     });
   }
 
@@ -127,7 +134,7 @@ class ShopService extends Service {
     // 默认检索检索出5公里范围
     const lat2 = latitude;
     const lng2 = longitude;
-    const queryString = `select * from (select id,name,image_path,address,category,promotion_info,phone, round(6378.138*2*asin(sqrt(pow(sin((latitude*pi()/180-${lat2}*pi()/180)/2),2)+cos(latitude*pi()/180)*cos(${lat2}*pi()/180)* pow(sin((longitude*pi()/180-${lng2}*pi()/180)/2),2)))*1000) as distance from shops order by distance ) as a where a.distance<=${range*1000} LIMIT ${pageNum-1},${pageSize}`;
+    const queryString = `select * from (select id,name,image_path,address,category,promotion_info,phone, round(6378.138*2*asin(sqrt(pow(sin((latitude*pi()/180-${lat2}*pi()/180)/2),2)+cos(latitude*pi()/180)*cos(${lat2}*pi()/180)* pow(sin((longitude*pi()/180-${lng2}*pi()/180)/2),2)))*1000) as distance from shops order by distance ) as a where a.distance<=${range * 1000} LIMIT ${pageNum - 1},${pageSize}`;
     const [ results ] = await this.app.model.query(queryString);
     const shopList = results.map(row => {
       return {

@@ -3,6 +3,7 @@ module.exports = app => {
   app.router.post('/cart/update', checkLogin, app.controller.portal.cartController.addOrUpdate);
 
   app.router.get('/cart/list', checkLogin, app.controller.portal.cartController.getCartList);
+  app.router.get('/cart/shopList', checkLogin, app.controller.portal.cartController.getShopCartList);
 
   app.router.delete('/cart/delete', checkLogin, app.controller.portal.cartController.deleteCart);
 

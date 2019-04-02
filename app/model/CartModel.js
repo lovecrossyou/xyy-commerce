@@ -16,11 +16,6 @@ module.exports = app => {
       type: STRING(50),
       allowNull: false,
     },
-    // 产品id
-    productId: {
-      type: STRING(50),
-      allowNull: true,
-    },
     // 店铺id
     shopId: {
       type: STRING(50),

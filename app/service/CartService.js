@@ -68,6 +68,30 @@ module.exports = app => class CartService extends Service {
   }
 
   /**
+   * 获取用户单店购物车
+   */
+  async getCartListByShopId({ shopId, msg }) {
+    const { id: userId } = this.session.currentUser;
+    let carts = await this.CartModel.findAll({
+      where: { userId },
+      include: [{ model: this.ProductModel }],
+    }).map(rows => rows && rows.toJSON());
+    carts = carts.filter(cart => cart.shopId === shopId);
+    const totalPrice = carts.reduce((prePrice, curItem) => {
+      return curItem.checked ? Number(Number(prePrice) + Number(curItem.quantity) * Number(curItem.product.price)).toFixed(2) : 0;
+    }, 0);
+    const allChecked = carts.every(item => item.checked === CHECKED);
+
+    if (isNaN(totalPrice)) return this.ServerResponse.createByErrorMsg('价格或数量错误');
+    return this.ServerResponse.createBySuccessMsgAndData(msg, {
+      totalPrice,
+      allChecked,
+      list: carts,
+    });
+  }
+
+
+  /**
    * @feature 根据用户id 返回购物车列表
    * @param userId {Number}
    * @param msg {String} 返回的msg
@@ -80,11 +104,13 @@ module.exports = app => class CartService extends Service {
     }).map(rows => rows && rows.toJSON());
 
     const groupedCarts = _(cartArr)
-      .groupBy(item => item.shopId)
-      .map((carts, shopId) => {
+      .groupBy(item => { return JSON.stringify({ shopName: item.shopName || '', shopId: item.shopId }); })
+      .map((items, shopString) => {
+        const shopInfo = JSON.parse(shopString);
         return {
-          shopId,
-          carts,
+          shopName: shopInfo.shopName,
+          shopId: shopInfo.shopId,
+          items,
         };
       })
       .reverse() // 为了反转数组排序
@@ -92,14 +118,14 @@ module.exports = app => class CartService extends Service {
 
     const cartsInfo = [];
     groupedCarts.forEach(shopCart => {
-      const carts = shopCart.carts;
+      const carts = shopCart.items;
       const totalPrice = carts.reduce((prePrice, curItem) => {
         return curItem.checked ? Number(Number(prePrice) + Number(curItem.quantity) * Number(curItem.product.price)).toFixed(2) : 0;
       }, 0);
       const checked = carts.every(item => item.checked === CHECKED);
       cartsInfo.push({
         totalPrice,
-        carts: shopCart.carts,
+        carts: shopCart.items,
         checked,
       });
     });

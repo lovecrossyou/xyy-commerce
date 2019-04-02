@@ -26,6 +26,14 @@ module.exports = app => class CartController extends Controller {
     this.ctx.body = response;
   }
 
+  /**
+   * 获取单店购物车列表
+   */
+  async getShopCartList() {
+    const response = await this.CartService.getCartListByShopId(this.request.query);
+    this.ctx.body = response;
+  }
+
   // 删除购物车
   async deleteCart() {
     const response = await this.CartService.deleteCartByproductIdList(this.request.query);
