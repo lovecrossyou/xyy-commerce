@@ -98,19 +98,14 @@ module.exports = app => class CartService extends Service {
    * @return {Promise.<*>}
    */
   async getCartListByUserId(msg, userId = this.session.currentUser.id) {
-    const cartArr = await this.CartModel.findAll({
-      where: { userId },
-      include: [{ model: this.ProductModel, where: { id: app.Sequelize.col('productId') } }],
-    }).map(rows => rows && rows.toJSON());
+    const queryString = `SELECT * FROM carts as c inner join products as p on c.productId = p.id where c.userId='${userId}' `;
+    const [ results ] = await this.app.model.query(queryString);
 
-    const groupedCarts = _(cartArr)
-      .groupBy(item => { return JSON.stringify({ shopName: item.shopName || '', shopId: item.shopId }); })
-      .map((items, shopString) => {
-        const shopInfo = JSON.parse(shopString);
+    const groupedCarts = _(results)
+      .groupBy(item => item.shopId)
+      .map((list, _) => {
         return {
-          shopName: shopInfo.shopName,
-          shopId: shopInfo.shopId,
-          items,
+          list,
         };
       })
       .reverse() // 为了反转数组排序
@@ -118,20 +113,22 @@ module.exports = app => class CartService extends Service {
 
     const cartsInfo = [];
     groupedCarts.forEach(shopCart => {
-      const carts = shopCart.items;
-      const totalPrice = carts.reduce((prePrice, curItem) => {
-        return curItem.checked ? Number(Number(prePrice) + Number(curItem.quantity) * Number(curItem.product.price)).toFixed(2) : 0;
+      const list = shopCart.list;
+      const totalPrice = list.reduce((prePrice, curItem) => {
+        return curItem.checked ? Number(Number(prePrice) + Number(curItem.quantity) * Number(curItem.price)).toFixed(2) : 0;
       }, 0);
-      const checked = carts.every(item => item.checked === CHECKED);
+      const checked = list.every(item => item.checked === CHECKED);
       cartsInfo.push({
         totalPrice,
-        carts: shopCart.items,
+        list: shopCart.list,
+        shopId: shopCart.shopId,
+        shopName: shopCart.shopName,
         checked,
       });
     });
 
     const totalPrice = cartsInfo.reduce((prePrice, cart) => {
-      return prePrice + cart.totalPrice;
+      return Number(Number(prePrice) + Number(cart.totalPrice)).toFixed(2);
     }, 0);
 
     const allChecked = cartsInfo.every(item => item.checked === CHECKED);
@@ -139,7 +136,7 @@ module.exports = app => class CartService extends Service {
     return this.ServerResponse.createBySuccessMsgAndData(msg, {
       totalPrice,
       allChecked,
-      list: cartsInfo,
+      carts: cartsInfo,
     });
   }
 

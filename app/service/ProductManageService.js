@@ -30,8 +30,9 @@ class ProductManageService extends Service {
 
     const shopRow = await this.ShopModel.findOne({ where: { userId } }).then(row => row && row.toJSON());
     if (!shopRow) return this.ServerResponse.createByErrorMsg('查找店铺信息失败');
-    const { id: shopId } = shopRow;
+    const { id: shopId, name } = shopRow;
     product.shopId = shopId;
+    product.shopName = name;
     // 查询商品
     try {
       const resultRow = await this.ProductModel.findOne({ where: { id: product.id } });

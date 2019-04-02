@@ -54,6 +54,16 @@ class OrderController extends Controller {
     this.ctx.body = response;
   }
 
+  /**
+   * 创建单店铺订单
+   */
+  async createShop() {
+    const { shippingId, shopId } = this.request.body;
+    const response = await this.OrderService.createShopOrder(shopId, shippingId);
+    this.ctx.body = response;
+  }
+  
+
   async cancel() {
     const { orderNum } = this.request.body;
     const response = await this.OrderService.cancel(orderNum);
