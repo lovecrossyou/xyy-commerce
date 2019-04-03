@@ -12,10 +12,13 @@
     "egg-qiniu-upload": "^1.1.4",
     "egg-scripts": "^2.11.0",
     "egg-sequelize": "^4.3.1",
+    "getui2": "^0.1.10",
     "lodash": "^4.17.11",
     "md5": "^2.2.1",
     "moment": "^2.24.0",
     "ms": "^2.1.1",
+    "mysql2": "^1.6.5",
+    "protobufjs": "^6.8.8",
     "qr-image": "^3.2.0",
     "stream-wormhole": "^1.1.0",
     "tenpay": "^2.1.17",
@@ -32,7 +35,11 @@
     "eslint-config-egg": "^7.3.1",
     "sequelize-auto": "^0.4.29",
     "sequelize-cli": "^5.4.0",
-    "webstorm-disable-index": "^1.2.0"
+    "webstorm-disable-index": "^1.2.0",
+    "request": "^2.87.0",
+    "zlib": "^1.0.5",
+    "crypto": "^1.0.1",
+    "protobufjs": "5.0.1"
   },
   "engines": {
     "node": ">=8.9.0"
@@ -41,7 +48,7 @@
     "start": "EGG_SERVER_ENV=prod ENABLE_NODE_LOG=YES egg-sequelize db:migrate && egg-scripts start --daemon --title=xyy-commerce -p 8004",
     "stop": "egg-scripts stop --title=xyy-commerce",
     "dev": "egg-bin dev --port 8004",
-    "package":"tar -zcvf ../release.tgz .",
+    "package": "tar -zcvf ../release.tgz .",
     "test-local": "egg-bin test --full-trace",
     "debug": "egg-bin debug",
     "test": "npm run lint -- --fix && npm run test-local",

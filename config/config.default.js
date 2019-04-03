@@ -77,5 +77,13 @@ module.exports = appInfo => {
     mode: 'file',
   };
 
+  // 个推推送
+  config.geTui = {
+    HOST: 'http://sdk.open.api.igexin.com/apiex.htm',
+    APPID: '',
+    APPKEY: '',
+    MASTERSECRET: '',
+  };
+
   return config;
 };
