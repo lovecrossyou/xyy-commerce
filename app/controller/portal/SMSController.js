@@ -7,7 +7,7 @@ class SMSController extends Controller {
   constructor(ctx) {
     super(ctx);
     this.session = ctx.session;
-    this.SMSService = ctx.service.sMSService;
+    this.SMSService = ctx.service.msgService;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
   }

@@ -10,10 +10,24 @@ class PushService extends Service {
 
   constructor(ctx) {
     super(ctx);
+    this.session = ctx.session;
     this.PushMessageModel = ctx.model.PushMessageModel;
     this.CategoryModel = ctx.model.CategoryModel;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
+  }
+
+  async bindUser(clientInfo) {
+    const { id: userId } = this.session.currentUser;
+    const { clientid } = clientInfo;
+    const pushMsg = {
+      userId,
+      clientId: clientid,
+    };
+    this.ctx.logger.info('clientInfo: %j', clientInfo);
+    const row = await this.PushMessageModel.create(pushMsg);
+    if (!row) return this.ServerResponse.createByErrorMsg('绑定推送服务失败');
+    return this.ServerResponse.createBySuccessMsgAndData('绑定推送服务成功', row);
   }
 
   // 1. 对单个用户推送消息
@@ -23,9 +37,9 @@ class PushService extends Service {
       title: '推送标题',
       text: '推送正文',
       url: 'http://www.baidu.com',
-      uidList: [ clientId ],
+      // uidList: [ clientId ],
     };
-    this.app.getui.pushMessage(message, 'transmission', 'pushMessageToApp');
+    this.app.geTui.pushMessage(message, 'transmission', 'pushMessageToApp');
   }
 
   // 2. 对指定列表用户推送消息

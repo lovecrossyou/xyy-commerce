@@ -80,9 +80,9 @@ module.exports = appInfo => {
   // 个推推送
   config.geTui = {
     HOST: 'http://sdk.open.api.igexin.com/apiex.htm',
-    APPID: '',
-    APPKEY: '',
-    MASTERSECRET: '',
+    APPID: 'y5yjVOpjpR7KiYaToRui15',
+    APPKEY: 'nueJCq9JhM6AeG3hDVOha7',
+    MASTERSECRET: 'u9Doz6iHnK82uh3IxNfdCA',
   };
 
   return config;

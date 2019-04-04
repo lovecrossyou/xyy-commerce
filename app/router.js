@@ -16,6 +16,7 @@ module.exports = app => {
   require('./router/portal/commentRouter')(app);
   require('./router/portal/categoryRouter')(app);
   require('./router/portal/smsRouter')(app);
+  require('./router/portal/pushRouter')(app);
 
 
   require('./router/backend/manageRouter')(app);

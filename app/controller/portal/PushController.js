@@ -6,8 +6,7 @@ class PushController extends Controller {
 
   constructor(ctx) {
     super(ctx);
-    this.session = ctx.session;
-    this.resquest = ctx.request;
+    this.request = ctx.request;
     this.PushService = ctx.service.pushService;
     this.ResponseCode = ctx.response.ResponseCode;
     this.ServerResponse = ctx.response.ServerResponse;
@@ -15,8 +14,15 @@ class PushController extends Controller {
   }
 
   async pushMessage() {
-    const { id } = this.ctx.params;
-    this.pushService.pushMessage(id);
+    const { id } = this.request.body;
+    this.PushService.pushMessage(id);
+    this.ctx.body = 'pushMessage test';
+  }
+
+  async bindUser() {
+    const body = this.request.body;
+    const response = await this.PushService.bindUser(body);
+    this.ctx.body = response;
   }
 }
 
